@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts PUBLIC
+        "-//Apache Software Foundation//DTD Struts Configuration 2.5//EN"
+        "http://struts.apache.org/dtds/struts-2.5.dtd">
+<struts>
+    <constant name="struts.devMode" value="false"/>
+
+    <package name="zavafraud" extends="struts-default">
+        <interceptors>
+            <interceptor name="authToken" class="com.zavabank.frauddetector.AuthTokenInterceptor"/>
+            <interceptor-stack name="zavaStack">
+                <interceptor-ref name="authToken"/>
+                <interceptor-ref name="defaultStack"/>
+            </interceptor-stack>
+        </interceptors>
+
+        <default-interceptor-ref name="zavaStack"/>
+
+        <global-results>
+            <result name="login" type="redirectAction">login</result>
+        </global-results>
+
+        <action name="login" class="com.zavabank.frauddetector.LoginAction">
+            <result name="input">/WEB-INF/jsp/login.jsp</result>
+            <result name="success" type="redirectAction">flaggedQueue</result>
+        </action>
+
+        <action name="flaggedQueue" class="com.zavabank.frauddetector.FlaggedQueueAction">
+            <result name="success">/WEB-INF/jsp/flagged-queue.jsp</result>
+        </action>
+
+        <action name="transactionDetail" class="com.zavabank.frauddetector.TransactionDetailAction">
+            <result name="success">/WEB-INF/jsp/transaction-detail.jsp</result>
+            <result name="notfound" type="redirectAction">flaggedQueue</result>
+        </action>
+
+        <action name="alertDecision" class="com.zavabank.frauddetector.AlertDecisionAction">
+            <result name="success" type="redirectAction">flaggedQueue</result>
+        </action>
+
+        <action name="rules" class="com.zavabank.frauddetector.RuleListAction">
+            <result name="success">/WEB-INF/jsp/rules.jsp</result>
+        </action>
+
+        <action name="ruleEdit" class="com.zavabank.frauddetector.RuleEditAction" method="execute">
+            <result name="input">/WEB-INF/jsp/rule-form.jsp</result>
+            <result name="success">/WEB-INF/jsp/rule-form.jsp</result>
+        </action>
+
+        <action name="ruleSave" class="com.zavabank.frauddetector.RuleEditAction" method="save">
+            <result name="input">/WEB-INF/jsp/rule-form.jsp</result>
+            <result name="success" type="redirectAction">rules</result>
+        </action>
+
+        <action name="ruleDelete" class="com.zavabank.frauddetector.RuleDeleteAction">
+            <result name="success" type="redirectAction">rules</result>
+        </action>
+
+        <action name="health" class="com.zavabank.frauddetector.HealthAction">
+            <interceptor-ref name="defaultStack"/>
+            <result name="success">/health.jsp</result>
+        </action>
+    </package>
+</struts>
