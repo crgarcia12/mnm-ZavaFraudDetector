@@ -218,5 +218,24 @@
       },
       "storyPoint": 5
     }
+  ],
+  "rules": {},
+  "projects": [
+    {
+      "properties": {
+        "repo": "mnm-ZavaFraudDetector",
+        "appName": "ZavaFraudDetector",
+        "languages": [
+          "Java"
+        ],
+        "frameworks": [
+          "Apache Struts 2"
+        ],
+        "tools": [
+          "Gradle"
+        ]
+      },
+      "incidents": []
+    }
   ]
 }
