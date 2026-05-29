@@ -1,0 +1,15 @@
+{
+  "input_name": "CWE - Memory Safety",
+  "analysis_method": "LLM",
+  "status": "not_applicable",
+  "result": {
+    "finding": "Memory-safety pointer/buffer CWEs are not applicable to this Java managed-memory codebase.",
+    "confidence": "high",
+    "evidence": [
+      "Scanned application source files for memory safety patterns"
+    ],
+    "values": []
+  },
+  "execution_time_seconds": 0,
+  "timestamp": "2026-05-29T04:12:00Z"
+}
