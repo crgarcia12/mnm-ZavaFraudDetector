@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Tasks template for modernization plan. Generate this file alongside plan.md to track individual migration tasks.",
+  "tasks": [
+    {
+      "type": "transform",
+      "id": "001-transform-migration-plaintext-credential-to-azure-keyvault",
+      "description": "Migrate hardcoded plaintext credentials from frauddetector.properties to Azure Key Vault for secure, centralized secret management.",
+      "reason": "The assessment report identified CWE-259 (Use of Hard-coded Password) and CWE-798 (Use of Hard-coded Credentials) in src/main/resources/frauddetector.properties. Database credentials (db.user, db.password) are stored as plaintext, posing a significant security risk.",
+      "requirements": "Migrate all hardcoded credentials in frauddetector.properties (db.password, db.user, and any other secrets) to Azure Key Vault. Update the application to retrieve secrets from Azure Key Vault at runtime using Managed Identity for passwordless, credential-free access. Addresses issues: CWE-259: Use of Hard-coded Password, CWE-798: Use of Hard-coded Credentials.",
+      "skills": [
+        {
+          "name": "migration-plaintext-credential-to-azure-keyvault",
+          "location": "builtin"
+        }
+      ],
+      "successCriteria": {
+        "passBuild": "true",
+        "generateNewUnitTests": "false",
+        "passUnitTests": "true"
+      }
+    },
+    {
+      "type": "security",
+      "id": "002-security-cve-remediation",
+      "description": "Scan all project dependencies for known CVEs and remediate identified vulnerabilities, with priority on the 7 mandatory Apache Struts 2 CVEs.",
+      "reason": "The assessment report identified 7 mandatory CVEs in Apache Struts 2 (v2.5.30): CVE-2025-68493, CVE-2025-66675, CVE-2025-64775, CVE-2024-53677, CVE-2023-50164, CVE-2023-41835, CVE-2023-34396. These vulnerabilities expose the application to denial-of-service attacks, path traversal, and missing XML validation.",
+      "requirements": "Upgrade vulnerable dependencies to the minimum patched version. If a CVE fix requires a major version upgrade, document the affected dependency, the current version, the upgraded major version, and the breaking change risk. Verify that the project builds and all tests pass after remediation. Addresses issues: CVE-2025-68493: Apache Struts 2 is Missing XML Validation, CVE-2025-66675: Apache Struts has a Denial of Service vulnerability, CVE-2025-64775: Apache Struts is Vulnerable to DoS via File Leak, CVE-2024-53677: Apache Struts file upload logic is flawed, CVE-2023-50164: Apache Struts vulnerable to path traversal, CVE-2023-41835: Apache Struts Improper Control of Dynamically-Managed Code Resources vulnerability, CVE-2023-34396: Apache Struts vulnerable to memory exhaustion.",
+      "dependencies": [
+        "001-transform-migration-plaintext-credential-to-azure-keyvault"
+      ],
+      "skills": [
+        {
+          "name": "validate-cves-and-fix",
+          "location": "builtin"
+        }
+      ],
+      "successCriteria": {
+        "passBuild": "true",
+        "generateNewUnitTests": "false",
+        "passUnitTests": "true"
+      }
+    }
+  ],
+  "metadata": {
+    "planName": "modernization-plan",
+    "projectName": "mnm-ZavaFraudDetector",
+    "language": "java",
+    "createdAt": "2026-05-29T00:32:24Z",
+    "version": "1.0"
+  }
+}
