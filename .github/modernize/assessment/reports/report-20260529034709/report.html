@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Assessment - ZavaFraudDetector</title>
+<style>
+:root {
+  --bg-primary: #ffffff;
+  --bg-card: #f8f9fa;
+  --bg-page: #f0f1f3;
+  --text-primary: #24292f;
+  --text-secondary: #57606a;
+  --text-muted: #6b7280;
+  --border-color: #d0d7de;
+  --border-light: #e1e4e8;
+  --link-color: #2563eb;
+  --color-mandatory: #E3008C;
+  --color-potential: #637CEF;
+  --color-optional: #A19F9D;
+  --font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+  --font-mono: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-family); font-size: 13px; color: var(--text-primary); background: var(--bg-primary); line-height: 1.5; margin: 0; padding: 0; }
+a { color: var(--link-color); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Page layout ───────────────────────────────────────────── */
+.main { margin: 0; padding: 24px 32px; background: var(--bg-primary); }
+.back-link { color: var(--text-muted); font-size: 13px; margin-bottom: 16px; display: block; }
+h1 { font-weight: 600; font-size: 20px; color: var(--text-primary); margin-bottom: 20px; }
+
+/* ── Report cards (matches VS Code .vscode-report-card) ──── */
+.report-card { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 4px; padding: 12px; margin-bottom: 20px; }
+.report-card h2 { font-size: 14px; font-weight: 600; margin: 0; color: var(--text-primary); }
+.report-card-body { margin-top: 16px; }
+
+/* ── Component Information (two-column) ────────────────── */
+.app-info-container { display: flex; gap: 8px; flex-wrap: wrap; }
+.app-info-column { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 8px; }
+.app-info-row { display: flex; align-items: baseline; }
+.app-info-label { width: 136px; flex-shrink: 0; font-weight: 600; color: var(--text-primary); }
+.app-info-value { flex: 1; color: var(--text-primary); }
+
+/* ── Issue Summary (pie charts + legend) ─────────────────── */
+.cards-container { display: flex; align-items: stretch; gap: 20px; flex-wrap: wrap; }
+.issue-summary-card { flex: 2; }
+.domain-summary-container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: space-around; }
+.domain-summary-item { flex: 1; min-width: 120px; text-align: center; padding: 0 16px; border-right: 1px solid var(--border-light); }
+.domain-summary-item:last-child { border-right: none; }
+.domain-summary-item h3 { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-top: 8px; }
+.domain-summary-item .count { font-size: 12px; color: var(--text-secondary); }
+.criticality-legend { display: flex; flex-wrap: wrap; gap: 15px; padding-top: 12px; justify-content: center; }
+.criticality-legend .legend-item { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text-secondary); }
+.legend-swatch { display: inline-block; width: 1em; height: 1em; border-radius: 2px; }
+
+/* ── Issue list tables ───────────────────────────────────── */
+.issue-section { margin-top: 20px; }
+.issue-section h2 { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+.issue-table { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 600px; }
+.issue-table th { text-align: left; text-transform: uppercase; font-weight: 600; font-size: calc(13px * 0.875); padding: 6px 8px; background: var(--bg-card); border-bottom: 1px solid var(--border-color); color: var(--text-secondary); position: sticky; top: 0; z-index: 1; }
+.issue-table td { padding: 12px 8px; border-bottom: 1px solid var(--border-light); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+.col-issue { width: 55%; }
+.col-criticality { width: 25%; }
+.col-storypoint { width: 20%; }
+
+/* ── Target dropdown ─────────────────────────────────────── */
+.target-select-container { margin: 4px 0 16px 0; display: flex; align-items: center; gap: 8px; }
+.target-select-container label { font-weight: 600; color: var(--text-primary); font-size: 14px; }
+.target-select-container select { font-family: var(--font-family); font-size: 13px; padding: 4px 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-primary); color: var(--text-primary); cursor: pointer; }
+
+/* ── Filter bar ──────────────────────────────────────────── */
+.filter-bar { display: flex; flex-wrap: wrap; gap: 16px; margin: 16px 0 8px 0; align-items: center; }
+.multi-select { position: relative; display: inline-block; min-width: 140px; }
+.multi-select-btn { font-family: var(--font-family); font-size: 13px; padding: 4px 24px 4px 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-primary); color: var(--text-primary); cursor: pointer; width: 100%; text-align: left; position: relative; white-space: nowrap; }
+.multi-select-btn::after { content: '\25BE'; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 11px; color: var(--text-secondary); }
+.multi-select-dropdown { display: none; position: absolute; top: 100%; left: 0; min-width: 100%; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100; margin-top: 2px; }
+.multi-select.open .multi-select-dropdown { display: block; }
+.multi-select-option { display: flex; align-items: center; gap: 6px; padding: 5px 10px; cursor: pointer; font-size: 13px; white-space: nowrap; }
+.multi-select-option:hover { background: var(--bg-secondary); }
+.multi-select-option input[type=checkbox] { margin: 0; cursor: pointer; }
+.clear-filters { font-size: 12px; color: var(--link-color); cursor: pointer; margin-left: 4px; }
+
+/* ── Criticality labels (colored square + text) ──────────── */
+.crit-label { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; white-space: nowrap; }
+.crit-square { display: inline-block; width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.crit-square-mandatory { background: var(--color-mandatory); }
+.crit-square-potential { background: var(--color-potential); }
+.crit-square-optional { background: var(--color-optional); }
+
+/* ── Expandable rows ─────────────────────────────────────── */
+.expand-btn { background: none; border: none; cursor: pointer; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 11px; transition: transform 0.15s; padding: 0; vertical-align: middle; flex-shrink: 0; }
+.expand-btn.open { transform: rotate(90deg); }
+.issue-title-cell { display: flex; align-items: center; gap: 4px; }
+.detail-row td { padding: 0; border-bottom: 1px solid var(--border-light); white-space: normal; overflow: visible; text-overflow: clip; }
+.detail-content { display: flex; gap: 0; padding: 8px 8px 8px 32px; min-width: 0; }
+.file-list { flex: 0 0 50%; min-width: 0; overflow: hidden; }
+.file-list table { width: 100%; border-collapse: collapse; }
+.file-list th { font-size: calc(13px * 0.875); text-transform: uppercase; font-weight: 600; color: var(--text-secondary); padding: 6px 8px; border-bottom: 1px solid var(--border-color); text-align: left; height: 32px; }
+.file-list td { font-size: 13px; padding: 6px 8px; border-bottom: 1px solid var(--border-light); color: var(--text-primary); }
+.file-list .file-path { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 300px; display: block; }
+.file-list .position { font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); }
+.explanation-panel { flex: 1; padding-left: 16px; min-width: 0; overflow-wrap: break-word; word-wrap: break-word; }
+.explanation-panel h4 { font-size: calc(13px * 0.875); text-transform: uppercase; font-weight: 600; color: var(--text-secondary); padding: 6px 0; border-bottom: 1px solid var(--border-color); height: 32px; margin: 0; }
+.explanation-panel p { font-size: 13px; padding: 8px 0; color: var(--text-primary); line-height: 1.6; white-space: normal; word-break: break-word; }
+
+/* ── Experimental badge ──────────────────────────────────── */
+.badge-experimental { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background: #fef9c3; color: #854d0e; vertical-align: middle; margin-left: 8px; cursor: default; }
+
+/* ── Footer ──────────────────────────────────────────────── */
+.footer { text-align: center; margin-top: 24px; color: var(--text-muted); font-size: 13px; }
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 800px) {
+  .main { padding: 16px; }
+  .app-info-container { flex-direction: column; }
+  .domain-summary-container { flex-direction: column; }
+  .domain-summary-item { border-right: none; border-bottom: 1px solid var(--border-light); padding-bottom: 12px; }
+  .detail-content { flex-direction: column; }
+  .file-list { flex: none; width: 100%; }
+  .explanation-panel { padding-left: 0; padding-top: 8px; }
+}
+/* ── Tab navigation ──────────────────────────────────────── */
+.tab-nav { display: flex; gap: 0; border-bottom: 1px solid var(--border-color); margin-bottom: 28px; flex-wrap: wrap; }
+.tab-btn { background: none; border: none; border-bottom: 2px solid transparent; padding: 10px 18px; font-size: 13px; font-family: var(--font-family); color: var(--text-secondary); cursor: pointer; margin-bottom: -1px; white-space: nowrap; position: relative; }
+.tab-btn:hover { color: var(--text-primary); }
+.tab-btn.active { color: var(--link-color); border-bottom-color: var(--link-color); font-weight: 600; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Tooltip on tab ──────────────────────────────────────── */
+.tab-btn[data-tooltip]::after { content: attr(data-tooltip); position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #24292f; color: #ffffff; font-size: 12px; font-weight: 400; padding: 6px 10px; border-radius: 4px; white-space: normal; width: max-content; max-width: 260px; text-align: center; pointer-events: none; opacity: 0; transition: opacity 0.15s; z-index: 100; }
+.tab-btn[data-tooltip]:hover::after { opacity: 1; }
+
+/* ── Fact content — prose column ─────────────────────────── */
+.fact-content { max-width: 860px; margin: 0 auto; line-height: 1.75; color: var(--text-primary); font-size: 14px; }
+.fact-content h1 { font-size: 22px; font-weight: 700; margin: 0 0 6px 0; color: var(--text-primary); letter-spacing: -0.01em; }
+.fact-content h1 + p { margin-top: 6px; color: var(--text-secondary); font-size: 14px; margin-bottom: 24px; }
+.fact-content h2 { font-size: 17px; font-weight: 700; margin: 36px 0 12px 0; padding-bottom: 6px; border-bottom: 1px solid var(--border-color); color: var(--text-primary); letter-spacing: -0.01em; }
+.fact-content h3 { font-size: 14px; font-weight: 700; margin: 24px 0 8px 0; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.04em; font-size: 12px; color: var(--text-secondary); }
+.fact-content p { margin: 10px 0; color: var(--text-primary); }
+.fact-content ul, .fact-content ol { margin: 10px 0 10px 22px; }
+.fact-content li { margin: 5px 0; }
+.fact-content a { color: var(--link-color); }
+.fact-content a:hover { text-decoration: underline; }
+
+/* ── Fact tables ─────────────────────────────────────────── */
+.table-wrap { overflow-x: auto; margin: 16px 0; }
+.fact-content table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 13px; border-radius: 6px; overflow: hidden; border: 1px solid var(--border-color); }
+.fact-content thead { background: var(--bg-card); }
+.fact-content th { text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; padding: 8px 14px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); }
+.fact-content td { padding: 9px 14px; border-bottom: 1px solid var(--border-light); vertical-align: top; color: var(--text-primary); }
+.fact-content tr:last-child td { border-bottom: none; }
+.fact-content tbody tr:hover { background: #f6f8fa; }
+
+/* ── Fact code ───────────────────────────────────────────── */
+.fact-content code { font-family: var(--font-mono); font-size: 12px; background: #f0f1f3; padding: 2px 6px; border-radius: 4px; color: #c7254e; }
+.fact-content pre { background: #f6f8fa; border: 1px solid var(--border-light); border-radius: 6px; padding: 14px 16px; overflow-x: auto; margin: 14px 0; }
+.fact-content pre code { background: none; color: var(--text-primary); padding: 0; border-radius: 0; }
+.fact-content hr { border: none; border-top: 1px solid var(--border-light); margin: 28px 0; }
+.fact-content strong { font-weight: 600; }
+.fact-content em { font-style: italic; }
+.fact-content blockquote { border-left: 3px solid var(--border-color); margin: 12px 0; padding: 4px 16px; color: var(--text-secondary); }
+.fact-unavailable { padding: 32px 0; }
+.fact-unavailable h3 { font-size: 16px; font-weight: 600; color: var(--text-primary); text-transform: none; letter-spacing: 0; margin: 0 0 12px 0; }
+.fact-unavailable p { margin: 0 0 8px 0; color: var(--text-secondary); }
+.fact-unavailable ol, .fact-unavailable ul { margin: 0 0 0 22px; color: var(--text-primary); }
+.fact-unavailable li { margin: 6px 0; }
+
+/* ── Mermaid diagram card ─────────────────────────────────── */
+.mermaid { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 8px; padding: 24px 16px; margin: 20px 0; overflow-x: auto; text-align: center; cursor: pointer; position: relative; }
+.mermaid:hover { border-color: var(--border-color); }
+.mermaid svg { max-width: 100%; height: auto !important; display: inline-block; }
+.mermaid-zoom-hint { position: absolute; top: 8px; right: 10px; font-size: 11px; color: var(--text-muted); opacity: 0; transition: opacity 0.15s; pointer-events: none; }
+.mermaid:hover .mermaid-zoom-hint { opacity: 1; }
+
+/* ── Diagram lightbox ────────────────────────────────────── */
+.diagram-lightbox { display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.7); backdrop-filter: blur(2px); align-items: center; justify-content: center; cursor: zoom-out; padding: 48px 32px; }
+.diagram-lightbox.open { display: flex; }
+.diagram-lightbox-inner { background: #ffffff; border-radius: 10px; padding: 32px; width: 88vw; max-height: 88vh; overflow: hidden; cursor: default; box-shadow: 0 24px 64px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; }
+.diagram-lightbox-inner svg { width: 100% !important; height: auto !important; max-height: 76vh; display: block; }
+.diagram-lightbox-close { position: fixed; top: 20px; right: 24px; background: #ffffff; border: none; border-radius: 50%; width: 36px; height: 36px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-primary); box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 1001; }
+.diagram-lightbox-close:hover { background: var(--bg-card); }
+.diagram-lightbox-hint { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.55); color: #ffffff; font-size: 12px; padding: 6px 14px; border-radius: 20px; pointer-events: none; white-space: nowrap; z-index: 1001; }
+</style>
+<script>
+window.__mermaidPending = [];
+window.__mermaidReady = false;
+window.__renderMermaidIn = function(container) {
+  if (container) { window.__mermaidPending.push(container); }
+};
+</script>
+<script type="module">
+import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+mermaid.initialize({ startOnLoad: false, theme: 'default', flowchart: { useMaxWidth: true }, sequence: { useMaxWidth: true } });
+
+window.__renderMermaidIn = function(container) {
+  var nodes = container ? container.querySelectorAll('.mermaid:not([data-processed])') : [];
+  if (nodes.length > 0) {
+    mermaid.run({ nodes: Array.from(nodes) }).then(function() {
+      nodes.forEach(function(node) {
+        if (!node.querySelector('.mermaid-zoom-hint')) {
+          var hint = document.createElement('span');
+          hint.className = 'mermaid-zoom-hint';
+          hint.textContent = 'Click to expand';
+          node.appendChild(hint);
+        }
+      });
+    });
+  }
+};
+
+var drained = new Set();
+(window.__mermaidPending || []).forEach(function(c) {
+  if (!drained.has(c)) { drained.add(c); window.__renderMermaidIn(c); }
+});
+window.__mermaidPending = [];
+window.__mermaidReady = true;
+
+function renderActivePanels() {
+  document.querySelectorAll('.tab-panel.active').forEach(function(p) {
+    if (!drained.has(p)) { drained.add(p); window.__renderMermaidIn(p); }
+  });
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', renderActivePanels);
+} else {
+  renderActivePanels();
+}
+</script>
+</head><body>
+<div id="diagram-lightbox" class="diagram-lightbox" role="dialog" aria-modal="true">
+  <button class="diagram-lightbox-close" id="diagram-lightbox-close" aria-label="Close">&#x2715;</button>
+  <div class="diagram-lightbox-hint">Scroll to zoom &nbsp;&middot;&nbsp; Drag to pan &nbsp;&middot;&nbsp; Double-click to reset</div>
+  <div class="diagram-lightbox-inner" id="diagram-lightbox-inner"></div>
+</div>
+<div class="main">
+<h1>ZavaFraudDetector</h1>
+<div class="report-card">
+  <h2>Component Information</h2>
+  <div class="report-card-body">
+    <div class="app-info-container">
+      <div class="app-info-column">
+        <div class="app-info-row"><span class="app-info-label">Component Name</span><span class="app-info-value">ZavaFraudDetector</span></div>
+        <div class="app-info-row"><span class="app-info-label">Java Version</span><span class="app-info-value">11</span></div>
+        <div class="app-info-row"><span class="app-info-label">Effort</span><span class="app-info-value" id="effort-display">L (total story points: 60)</span></div>
+      </div>
+      <div class="app-info-column">
+        <div class="app-info-row"><span class="app-info-label">Build Tools</span><span class="app-info-value">Gradle, Docker</span></div>
+        <div class="app-info-row"><span class="app-info-label">Frameworks</span><span class="app-info-value">Apache Struts 2.5.30, JSP, Servlet API 4.0.1, JDBC</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+<nav class="tab-nav">
+  <button class="tab-btn active" data-tab="tab-issues" data-tooltip="Issues detected in the source code">Issues</button>
+  <button class="tab-btn" data-tab="tab-arch" data-tooltip="How the app&#x27;s layers connect — from UI to data.">Architecture</button>
+  <button class="tab-btn" data-tab="tab-api" data-tooltip="Endpoints exposed by this app and how services communicate.">API Contracts</button>
+  <button class="tab-btn" data-tab="tab-config" data-tooltip="Environment settings, runtime profiles, and deployment manifests.">Configuration</button>
+  <button class="tab-btn" data-tab="tab-workflows" data-tooltip="Domain entities and the core flows users move through.">Business Workflows</button>
+  <button class="tab-btn" data-tab="tab-deps" data-tooltip="Libraries and frameworks this app depends on, grouped by category.">Dependencies</button>
+  <button class="tab-btn" data-tab="tab-data" data-tooltip="Database schema, entity relationships, and persistence behavior.">Data Model</button>
+</nav>
+<div id="tab-issues" class="tab-panel active">
+<div class="report-card">
+  <h2>Issue Summary</h2>
+  <div class="report-card-body">
+    <div class="domain-summary-container" id="donut-container">
+      <div class="domain-summary-item">
+<svg viewBox="0 0 100 100" width="100" height="100" style="display:block;margin:0 auto;transform:rotate(-90deg);">
+  <circle cx="50" cy="50" r="35" fill="none" stroke="var(--color-potential)" stroke-width="15" stroke-dasharray="219.91 219.91" stroke-dashoffset="-0.00"/>
+</svg>
+
+        <h3>Cloud Readiness</h3>
+        <div class="count">3 issues</div>
+      </div>
+      <div class="domain-summary-item">
+<svg viewBox="0 0 100 100" width="100" height="100" style="display:block;margin:0 auto;transform:rotate(-90deg);">
+  <circle cx="50" cy="50" r="35" fill="none" stroke="var(--color-mandatory)" stroke-width="15" stroke-dasharray="108.46 219.91" stroke-dashoffset="-0.00"/>
+  <circle cx="50" cy="50" r="35" fill="none" stroke="var(--color-potential)" stroke-width="15" stroke-dasharray="108.46 219.91" stroke-dashoffset="-109.96"/>
+</svg>
+
+        <h3>Java Upgrade</h3>
+        <div class="count">2 issues</div>
+      </div>
+      <div class="domain-summary-item">
+<svg viewBox="0 0 100 100" width="100" height="100" style="display:block;margin:0 auto;transform:rotate(-90deg);">
+  <circle cx="50" cy="50" r="35" fill="none" stroke="var(--color-mandatory)" stroke-width="15" stroke-dasharray="145.11 219.91" stroke-dashoffset="-0.00"/>
+  <circle cx="50" cy="50" r="35" fill="none" stroke="var(--color-potential)" stroke-width="15" stroke-dasharray="71.80 219.91" stroke-dashoffset="-146.61"/>
+</svg>
+
+        <h3>Security</h3>
+        <div class="count">3 issues</div>
+      </div>
+    </div>
+    <div class="criticality-legend">
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--color-mandatory)"></span>Mandatory</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--color-potential)"></span>Potential</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--color-optional)"></span>Optional</div>
+    </div>
+  </div>
+</div>
+<div class="filter-bar" id="filter-bar">
+  <div class="multi-select" id="domain-ms">
+    <button class="multi-select-btn" onclick="toggleMultiSelect('domain-ms')">Domain</button>
+    <div class="multi-select-dropdown">
+      <label class="multi-select-option"><input type="checkbox" value="cloud-readiness" onchange="onMultiSelectChange('domain-ms','Domain')"/> Cloud Readiness</label>
+      <label class="multi-select-option"><input type="checkbox" value="java-upgrade" onchange="onMultiSelectChange('domain-ms','Domain')"/> Java Upgrade</label>
+      <label class="multi-select-option"><input type="checkbox" value="security" onchange="onMultiSelectChange('domain-ms','Domain')"/> Security</label>
+    </div>
+  </div>
+  <div class="multi-select" id="criticality-ms">
+    <button class="multi-select-btn" onclick="toggleMultiSelect('criticality-ms')">Criticality</button>
+    <div class="multi-select-dropdown">
+      <label class="multi-select-option"><input type="checkbox" value="mandatory" onchange="onMultiSelectChange('criticality-ms','Criticality')"/> Mandatory</label>
+      <label class="multi-select-option"><input type="checkbox" value="potential" onchange="onMultiSelectChange('criticality-ms','Criticality')"/> Potential</label>
+    </div>
+  </div>
+  <a class="clear-filters" href="javascript:void(0)" onclick="clearAllFilters()">Clear all</a>
+</div>
+<div class="issue-section" data-domain="cloud-readiness">
+  <h2>Cloud Readiness</h2>
+  <table class="issue-table">
+    <colgroup><col class="col-issue"/><col class="col-criticality"/><col class="col-storypoint"/></colgroup>
+    <thead><tr><th>Issue Category</th><th>Criticality</th><th>Story Point</th></tr></thead>
+    <tbody>
+    <tr class="issue-row" data-criticality="potential" data-targets='{&quot;azure-aks&quot;:{&quot;effort&quot;:8,&quot;severity&quot;:&quot;potential&quot;}}' data-default-effort="8" data-default-severity="potential" data-rule="war-tomcat-deployment" onclick="toggleRow('row-cloudreadiness-0', this)" style="cursor:pointer;">
+      <td style="white-space:normal;"><div class="issue-title-cell"><button class="expand-btn" id="btn-row-cloudreadiness-0">&#x276F;</button> Rework the WAR-based Tomcat deployment model for cloud hosting</div></td>
+      <td class="crit-cell"><span class="crit-label"><span class="crit-square crit-square-potential"></span>Potential</span></td>
+      <td class="sp-cell">8</td>
+    </tr>
+    <tr class="detail-row" id="row-cloudreadiness-0" style="display:none;">
+      <td colspan="3">
+        <div class="detail-content">
+          <div class="file-list">
+            <table><colgroup><col style="width:70%"/><col style="width:30%"/></colgroup>
+            <thead><tr><th>File</th><th>Position</th></tr></thead><tbody>
+            <tr><td><span class="file-path" title="build.gradle">build.gradle</span></td><td><span class="position">Line 26</span></td></tr>
+            <tr><td><span class="file-path" title="Dockerfile">Dockerfile</span></td><td><span class="position">Line 6</span></td></tr>
+            </tbody></table>
+          </div>
+          <div class="explanation-panel">
+            <h4>Explanation</h4>
+            <div><p>The current delivery model builds a <strong>ROOT.war</strong> and runs it inside a dedicated Tomcat image. Cloud-native targets usually prefer self-contained processes, simplified container images, and clearer runtime ownership than an external servlet container layer.</p></div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="issue-row" data-criticality="potential" data-targets='{&quot;azure-aks&quot;:{&quot;effort&quot;:5,&quot;severity&quot;:&quot;potential&quot;}}' data-default-effort="5" data-default-severity="potential" data-rule="raw-jdbc-sqlserver-coupling" onclick="toggleRow('row-cloudreadiness-1', this)" style="cursor:pointer;">
+      <td style="white-space:normal;"><div class="issue-title-cell"><button class="expand-btn" id="btn-row-cloudreadiness-1">&#x276F;</button> Reduce direct JDBC and SQL Server coupling</div></td>
+      <td class="crit-cell"><span class="crit-label"><span class="crit-square crit-square-potential"></span>Potential</span></td>
+      <td class="sp-cell">5</td>
+    </tr>
+    <tr class="detail-row" id="row-cloudreadiness-1" style="display:none;">
+      <td colspan="3">
+        <div class="detail-content">
+          <div class="file-list">
+            <table><colgroup><col style="width:70%"/><col style="width:30%"/></colgroup>
+            <thead><tr><th>File</th><th>Position</th></tr></thead><tbody>
+            <tr><td><span class="file-path" title="src/main/java/com/zavabank/frauddetector/FraudConnectionFactory.java">src/main/java/com/zavabank/frauddetector/FraudConnectionFactory.java</span></td><td><span class="position">Line 19</span></td></tr>
+            <tr><td><span class="file-path" title="src/main/java/com/zavabank/frauddetector/FlaggedQueueAction.java">src/main/java/com/zavabank/frauddetector/FlaggedQueueAction.java</span></td><td><span class="position">Line 24</span></td></tr>
+            </tbody></table>
+          </div>
+          <div class="explanation-panel">
+            <h4>Explanation</h4>
+            <div><p>Business actions open JDBC connections directly and embed SQL statements inline. This creates tight coupling to SQL Server behavior, limits connection-pooling options, and makes future portability or observability improvements more difficult.</p></div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="issue-row" data-criticality="potential" data-targets='{&quot;azure-aks&quot;:{&quot;effort&quot;:5,&quot;severity&quot;:&quot;potential&quot;}}' data-default-effort="5" data-default-severity="potential" data-rule="external-auth-gateway-dependency" onclick="toggleRow('row-cloudreadiness-2', this)" style="cursor:pointer;">
+      <td style="white-space:normal;"><div class="issue-title-cell"><button class="expand-btn" id="btn-row-cloudreadiness-2">&#x276F;</button> Externalize and harden the authentication gateway dependency</div></td>
+      <td class="crit-cell"><span class="crit-label"><span class="crit-square crit-square-potential"></span>Potential</span></td>
+      <td class="sp-cell">5</td>
+    </tr>
+    <tr class="detail-row" id="row-cloudreadiness-2" style="display:none;">
+      <td colspan="3">
+        <div class="detail-content">
+          <div class="file-list">
+            <table><colgroup><col style="width:70%"/><col style="width:30%"/></colgroup>
+            <thead><tr><th>File</th><th>Position</th></tr></thead><tbody>
+            <tr><td><span class="file-path" title="src/main/resources/frauddetector.properties">src/main/resources/frauddetector.properties</span></td><td><span class="position">Line 7</span></td></tr>
+            <tr><td><span class="file-path" title="src/main/java/com/zavabank/frauddetector/SsoSessionService.java">src/main/java/com/zavabank/frauddetector/SsoSessionService.java</span></td><td><span class="position">Line 93</span></td></tr>
+            </tbody></table>
+          </div>
+          <div class="explanation-panel">
+            <h4>Explanation</h4>
+            <div><p>Cookie-based authentication depends on a fixed <strong>WhoAmI</strong> endpoint on a separate gateway service. Cloud deployment will need a more robust integration strategy, including secure transport and resilient endpoint configuration.</p></div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+</div>
+<div class="issue-section" data-domain="java-upgrade">
+  <h2>Java Upgrade</h2>
+  <table class="issue-table">
+    <colgroup><col class="col-issue"/><col class="col-criticality"/><col class="col-storypoint"/></colgroup>
+    <thead><tr><th>Issue Category</th><th>Criticality</th><th>Story Point</th></tr></thead>
+    <tbody>
+    <tr class="issue-row" data-criticality="mandatory" data-targets='{&quot;azure-aks&quot;:{&quot;effort&quot;:13,&quot;severity&quot;:&quot;mandatory&quot;}}' data-default-effort="13" data-default-severity="mandatory" data-rule="java-struts2-framework" onclick="toggleRow('row-javaupgrade-0', this)" style="cursor:pointer;">
+      <td style="white-space:normal;"><div class="issue-title-cell"><button class="expand-btn" id="btn-row-javaupgrade-0">&#x276F;</button> Modernize the Apache Struts 2 web framework</div></td>
+      <td class="crit-cell"><span class="crit-label"><span class="crit-square crit-square-mandatory"></span>Mandatory</span></td>
+      <td class="sp-cell">13</td>
+    </tr>
+    <tr class="detail-row" id="row-javaupgrade-0" style="display:none;">
+      <td colspan="3">
+        <div class="detail-content">
+          <div class="file-list">
+            <table><colgroup><col style="width:70%"/><col style="width:30%"/></colgroup>
+            <thead><tr><th>File</th><th>Position</th></tr></thead><tbody>
+            <tr><td><span class="file-path" title="build.gradle">build.gradle</span></td><td><span class="position">Line 18</span></td></tr>
+            <tr><td><span class="file-path" title="src/main/resources/struts.xml">src/main/resources/struts.xml</span></td><td><span class="position">Line 8</span></td></tr>
+            </tbody></table>
+          </div>
+          <div class="explanation-panel">
+            <h4>Explanation</h4>
+            <div><p>The application depends on <strong>Apache Struts 2.5.30</strong> and XML-configured actions, which increases modernization effort for newer Java stacks. Moving to a supported framework and reducing Struts-specific configuration will be required before broader runtime upgrades.</p></div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="issue-row" data-criticality="potential" data-targets='{&quot;azure-aks&quot;:{&quot;effort&quot;:8,&quot;severity&quot;:&quot;potential&quot;}}' data-default-effort="8" data-default-severity="potential" data-rule="jakarta-servlet-transition" onclick="toggleRow('row-javaupgrade-1', this)" style="cursor:pointer;">
+      <td style="white-space:normal;"><div class="issue-title-cell"><button class="expand-btn" id="btn-row-javaupgrade-1">&#x276F;</button> Move from javax servlet APIs to Jakarta-compatible APIs</div></td>
+      <td class="crit-cell"><span class="crit-label"><span class="crit-square crit-square-potential"></span>Potential</span></td>
+      <td class="sp-cell">8</td>
+    </tr>
+    <tr class="detail-row" id="row-javaupgrade-1" style="display:none;">
+      <td colspan="3">
+        <div class="detail-content">
+          <div class="file-list">
+            <table><colgroup><col style="width:70%"/><col style="width:30%"/></colgroup>
+            <thead><tr><th>File</th><th>Position</th></tr></thead><tbody>
+            <tr><td><span class="file-path" title="build.gradle">build.gradle</span></td><td><span class="position">Line 17</span></td></tr>
+            <tr><td><span class="file-path" title="src/main/webapp/WEB-INF/web.xml">src/main/webapp/WEB-INF/web.xml</span></td><td><span class="position">Line 2</span></td></tr>
+            </tbody></table>
+          </div>
+          <div class="explanation-panel">
+            <h4>Explanation</h4>
+            <div><p>The build still compiles against <strong>javax.servlet 4.0.1</strong> and deploys as a WAR. Modern Java application servers and frameworks increasingly require Jakarta namespaces, so API imports and deployment packaging will need review.</p></div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+</div>
+<div class="issue-section" data-domain="security">
+  <h2>Security <span class="badge-experimental" title="These issues were generated by AI and may contain inaccuracies or incomplete information. Please review carefully.">Experimental</span></h2>
+  <table class="issue-table">
+    <colgroup><col class="col-issue"/><col class="col-criticality"/><col class="col-storypoint"/></colgroup>
+    <thead><tr><th>Issue Category</th><th>Criticality</th><th>Story Point</th></tr></thead>
+    <tbody>
+    <tr class="issue-row" data-criticality="mandatory" onclick="toggleRow('row-security-0', this)" style="cursor:pointer;">
+      <td style="white-space:normal;"><div class="issue-title-cell"><button class="expand-btn" id="btn-row-security-0">&#x276F;</button> CWE-259: Hardcoded database credentials in source-controlled properties</div></td>
+      <td class="crit-cell"><span class="crit-label"><span class="crit-square crit-square-mandatory"></span>Mandatory</span></td>
+      <td class="sp-cell">8</td>
+    </tr>
+    <tr class="detail-row" id="row-security-0" style="display:none;">
+      <td colspan="3">
+        <div class="detail-content">
+          <div class="file-list">
+            <table><thead><tr><th>File</th></tr></thead><tbody>
+            <tr><td><span class="file-path" title="src/main/resources/frauddetector.properties">src/main/resources/frauddetector.properties</span></td></tr>
+            </tbody></table>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="issue-row" data-criticality="mandatory" onclick="toggleRow('row-security-1', this)" style="cursor:pointer;">
+      <td style="white-space:normal;"><div class="issue-title-cell"><button class="expand-btn" id="btn-row-security-1">&#x276F;</button> CWE-319: Cleartext or trust-bypassing transport for database and auth calls</div></td>
+      <td class="crit-cell"><span class="crit-label"><span class="crit-square crit-square-mandatory"></span>Mandatory</span></td>
+      <td class="sp-cell">8</td>
+    </tr>
+    <tr class="detail-row" id="row-security-1" style="display:none;">
+      <td colspan="3">
+        <div class="detail-content">
+          <div class="file-list">
+            <table><thead><tr><th>File</th></tr></thead><tbody>
+            <tr><td><span class="file-path" title="src/main/java/com/zavabank/frauddetector/FraudConfig.java">src/main/java/com/zavabank/frauddetector/FraudConfig.java</span></td></tr>
+            <tr><td><span class="file-path" title="src/main/resources/frauddetector.properties">src/main/resources/frauddetector.properties</span></td></tr>
+            </tbody></table>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="issue-row" data-criticality="potential" onclick="toggleRow('row-security-2', this)" style="cursor:pointer;">
+      <td style="white-space:normal;"><div class="issue-title-cell"><button class="expand-btn" id="btn-row-security-2">&#x276F;</button> CWE-598: Session token accepted from URL query parameters</div></td>
+      <td class="crit-cell"><span class="crit-label"><span class="crit-square crit-square-potential"></span>Potential</span></td>
+      <td class="sp-cell">5</td>
+    </tr>
+    <tr class="detail-row" id="row-security-2" style="display:none;">
+      <td colspan="3">
+        <div class="detail-content">
+          <div class="file-list">
+            <table><thead><tr><th>File</th></tr></thead><tbody>
+            <tr><td><span class="file-path" title="src/main/java/com/zavabank/frauddetector/SsoSessionService.java">src/main/java/com/zavabank/frauddetector/SsoSessionService.java</span></td></tr>
+            <tr><td><span class="file-path" title="src/main/webapp/WEB-INF/jsp/login.jsp">src/main/webapp/WEB-INF/jsp/login.jsp</span></td></tr>
+            </tbody></table>
+          </div>
+        </div>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+</div>
+</div><!-- #tab-issues -->
+<div id="tab-arch" class="tab-panel">
+  <div class="fact-content"><h1 id="architecture-diagram">Architecture Diagram</h1>
+<p>This repository contains a single deployable fraud analyst web application packaged as a WAR and hosted on Tomcat. The application uses Apache Struts 2 for request handling, direct JDBC access to SQL Server, and an external .NET authentication gateway for SSO token resolution.</p>
+<h2 id="application-architecture">Application Architecture</h2>
+<div class="mermaid">
+flowchart TD
+    subgraph Client["Client Layer"]
+        Analyst["Fraud analyst browser"]
+    end
+    subgraph Web["Application Layer - Struts 2 on Tomcat 9"]
+        JSP["JSP views"]
+        Actions["Struts action classes"]
+        Auth["AuthTokenInterceptor"]
+        SSO["SsoSessionService"]
+        Rules["Fraud rule management"]
+        Queue["Flagged alert queue"]
+    end
+    subgraph Data["Data Layer"]
+        JDBC["Direct JDBC access"]
+        SQL[("SQL Server ZavaBankDB")]
+    end
+    subgraph External["External Services"]
+        Gateway["ZavaAuthGateway WhoAmI"]
+    end
+
+    Analyst -->|"HTTP requests"| JSP
+    JSP -->|"submit actions"| Auth
+    Auth -->|"allow authenticated requests"| Actions
+    Actions -->|"resolve session user"| SSO
+    SSO -->|"cookie token lookup"| Gateway
+    Actions -->|"queue and rule workflows"| Queue
+    Actions -->|"rule maintenance"| Rules
+    Queue -->|"read alerts"| JDBC
+    Rules -->|"read write rules"| JDBC
+    SSO -->|"validate session token"| JDBC
+    JDBC -->|"SQL queries"| SQL
+</div>
+<h3 id="technology-stack-summary">Technology Stack Summary</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Layer</th><th>Technology</th><th>Version</th><th>Purpose</th>
+</tr></thead><tbody>
+<tr><td>Presentation</td><td>JSP and Struts tags</td><td>N/A</td><td>Server-rendered analyst UI</td></tr>
+<tr><td>Web</td><td>Apache Struts</td><td>2.5.30</td><td>Action routing, interceptor stack, form handling</td></tr>
+<tr><td>Runtime</td><td>Apache Tomcat</td><td>9.0-jdk11</td><td>Servlet container for the WAR deployment</td></tr>
+<tr><td>Data Access</td><td>JDBC with SQLServerDriver</td><td>12.8.1.jre11</td><td>Direct SQL access without an ORM</td></tr>
+<tr><td>Data Store</td><td>Microsoft SQL Server</td><td>N/A</td><td>Stores alerts, rules, accounts, transactions, and sessions</td></tr>
+<tr><td>External Integration</td><td>ZavaAuthGateway WhoAmI</td><td>N/A</td><td>Resolves SSO cookie values into session tokens</td></tr>
+</tbody></table></div>
+<h3 id="data-storage-external-services">Data Storage & External Services</h3>
+<p>The application uses a single SQL Server database for operational data, fraud rules, and session validation. It also depends on a separate HTTP-based authentication gateway to translate the <code>.ZAVAAUTH</code> cookie into a session token that the Java application can validate against the <code>SessionTokens</code> and <code>Users</code> tables.</p>
+<h3 id="key-architectural-decisions">Key Architectural Decisions</h3>
+<ul>
+<li>Uses a server-rendered Struts 2 MVC pattern with a custom authentication interceptor applied to most actions.</li>
+<li>Couples business actions directly to SQL queries through JDBC rather than using a service or repository abstraction layer.</li>
+<li>Relies on an external .NET authentication gateway to bridge cross-platform SSO cookie handling.</li>
+</ul>
+<h2 id="component-relationships">Component Relationships</h2>
+<div class="mermaid">
+flowchart LR
+    subgraph Presentation
+        Login["LoginAction"]
+        QueueAction["FlaggedQueueAction"]
+        Detail["TransactionDetailAction"]
+        Decision["AlertDecisionAction"]
+        RuleList["RuleListAction"]
+        RuleEdit["RuleEditAction"]
+        RuleDelete["RuleDeleteAction"]
+        Health["HealthAction"]
+    end
+    subgraph Business["Business Logic"]
+        Interceptor["AuthTokenInterceptor"]
+        SessionSvc["SsoSessionService"]
+    end
+    subgraph DataAccess["Data Access"]
+        ConnFactory["FraudConnectionFactory"]
+        AlertRecord["FraudAlertRecord"]
+        RuleRecord["FraudRuleRecord"]
+        UserRecord["SessionUser"]
+    end
+    subgraph Infra["Infrastructure"]
+        SQLServer["SQL Server"]
+        WhoAmI["Auth gateway"]
+    end
+
+    Interceptor -.->|"intercepts"| Login
+    Interceptor -.->|"intercepts"| QueueAction
+    Interceptor -.->|"intercepts"| Detail
+    Interceptor -.->|"intercepts"| Decision
+    Interceptor -.->|"intercepts"| RuleList
+    Interceptor -.->|"intercepts"| RuleEdit
+    Interceptor -.->|"intercepts"| RuleDelete
+    Login -->|"authenticates"| SessionSvc
+    QueueAction -->|"loads alerts"| ConnFactory
+    Detail -->|"loads one alert"| ConnFactory
+    Decision -->|"updates status"| ConnFactory
+    RuleList -->|"loads rules"| ConnFactory
+    RuleEdit -->|"reads and saves rules"| ConnFactory
+    RuleDelete -->|"deletes rule"| ConnFactory
+    SessionSvc -->|"validates session"| ConnFactory
+    SessionSvc -->|"resolves cookie token"| WhoAmI
+    ConnFactory -->|"opens JDBC connections"| SQLServer
+    QueueAction -->|"populates"| AlertRecord
+    Detail -->|"populates"| AlertRecord
+    RuleList -->|"populates"| RuleRecord
+    SessionSvc -->|"returns"| UserRecord
+</div>
+<h3 id="component-inventory">Component Inventory</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Component</th><th>Layer</th><th>Type</th><th>Responsibility</th>
+</tr></thead><tbody>
+<tr><td>AuthTokenInterceptor</td><td>Business Logic</td><td>Struts interceptor</td><td>Enforces session-based access for all non-login and non-health actions</td></tr>
+<tr><td>SsoSessionService</td><td>Business Logic</td><td>Session service</td><td>Extracts tokens from request inputs and validates them against the DB or auth gateway</td></tr>
+<tr><td>LoginAction</td><td>Presentation</td><td>Struts action</td><td>Accepts a session token and starts an authenticated analyst session</td></tr>
+<tr><td>FlaggedQueueAction</td><td>Presentation</td><td>Struts action</td><td>Lists the newest fraud alerts awaiting analyst review</td></tr>
+<tr><td>TransactionDetailAction</td><td>Presentation</td><td>Struts action</td><td>Shows alert details and review context for a selected alert</td></tr>
+<tr><td>AlertDecisionAction</td><td>Presentation</td><td>Struts action</td><td>Records approve or reject decisions against an alert</td></tr>
+<tr><td>RuleListAction</td><td>Presentation</td><td>Struts action</td><td>Lists configured fraud rules for analysts</td></tr>
+<tr><td>RuleEditAction</td><td>Presentation</td><td>Struts action</td><td>Creates and updates fraud rules with simple validation</td></tr>
+<tr><td>RuleDeleteAction</td><td>Presentation</td><td>Struts action</td><td>Deletes an existing fraud rule</td></tr>
+<tr><td>HealthAction</td><td>Presentation</td><td>Struts action</td><td>Returns a simple online status page without auth</td></tr>
+<tr><td>FraudConnectionFactory</td><td>Data Access</td><td>Connection factory</td><td>Creates direct JDBC connections using externalized configuration</td></tr>
+<tr><td>FraudAlertRecord</td><td>Data Access</td><td>DTO</td><td>Carries alert data into the JSP views</td></tr>
+<tr><td>FraudRuleRecord</td><td>Data Access</td><td>DTO</td><td>Carries rule data into the JSP views</td></tr>
+<tr><td>SessionUser</td><td>Data Access</td><td>DTO</td><td>Carries authenticated user identity in the session</td></tr>
+</tbody></table></div></div>
+</div>
+<div id="tab-api" class="tab-panel">
+  <div class="fact-content"><h1 id="api-service-communication-contracts">API & Service Communication Contracts</h1>
+<p>The application exposes a small server-rendered HTTP surface built around Struts action endpoints. Communication is synchronous: browser requests reach the Java web app, which then talks directly to SQL Server and, for SSO cookie resolution, to an external authentication gateway.</p>
+<h2 id="service-catalog">Service Catalog</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Service</th><th>Port</th><th>Category</th><th>Purpose</th>
+</tr></thead><tbody>
+<tr><td>ZavaFraudDetector</td><td>8080</td><td>API Layer</td><td>Fraud analyst dashboard for queue review and rule management</td></tr>
+<tr><td>ZavaAuthGateway</td><td>8080</td><td>Infrastructure</td><td>Resolves <code>.ZAVAAUTH</code> cookies through <code>WhoAmI.ashx</code></td></tr>
+<tr><td>SQL Server</td><td>1433</td><td>Infrastructure</td><td>Stores alerts, rules, account data, transactions, and sessions</td></tr>
+</tbody></table></div>
+<h2 id="api-endpoints-inventory">API Endpoints Inventory</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Service</th><th>Method</th><th>Path</th><th>Request Type</th><th>Response Type</th>
+</tr></thead><tbody>
+<tr><td>ZavaFraudDetector</td><td>GET or POST</td><td>/login.action</td><td><code>sessionToken</code> form field, query param, header, or cookie</td><td>Redirect to <code>flaggedQueue</code> or render login JSP</td></tr>
+<tr><td>ZavaFraudDetector</td><td>GET</td><td>/flaggedQueue.action</td><td>Session-backed request</td><td><code>FraudAlertRecord</code> list rendered in <code>flagged-queue.jsp</code></td></tr>
+<tr><td>ZavaFraudDetector</td><td>GET</td><td>/transactionDetail.action</td><td><code>alertId</code> query parameter</td><td>Single <code>FraudAlertRecord</code> rendered in <code>transaction-detail.jsp</code></td></tr>
+<tr><td>ZavaFraudDetector</td><td>POST</td><td>/alertDecision.action</td><td><code>alertId</code>, <code>decision</code>, <code>notes</code> form fields</td><td>Redirect to <code>flaggedQueue.action</code></td></tr>
+<tr><td>ZavaFraudDetector</td><td>GET</td><td>/rules.action</td><td>Session-backed request</td><td><code>FraudRuleRecord</code> list rendered in <code>rules.jsp</code></td></tr>
+<tr><td>ZavaFraudDetector</td><td>GET</td><td>/ruleEdit.action</td><td>Optional <code>ruleId</code> query parameter</td><td>Rule editor JSP with existing data when <code>ruleId</code> is present</td></tr>
+<tr><td>ZavaFraudDetector</td><td>POST</td><td>/ruleSave.action</td><td>Rule editor form fields</td><td>Redirect to <code>rules.action</code> or return validation errors</td></tr>
+<tr><td>ZavaFraudDetector</td><td>GET</td><td>/ruleDelete.action</td><td><code>ruleId</code> query parameter</td><td>Redirect to <code>rules.action</code></td></tr>
+<tr><td>ZavaFraudDetector</td><td>GET</td><td>/health.action</td><td>No request body</td><td>Static health JSP</td></tr>
+</tbody></table></div>
+<h2 id="management-observability-endpoints">Management & Observability Endpoints</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Service</th><th>Endpoint</th><th>Custom Metrics (if any)</th>
+</tr></thead><tbody>
+<tr><td>ZavaFraudDetector</td><td>/health.action</td><td>None detected</td></tr>
+</tbody></table></div>
+<h2 id="dtos-contracts">DTOs & Contracts</h2>
+<p>The primary contract types are simple mutable POJOs rather than immutable DTOs. <code>FraudAlertRecord</code> represents queue and detail responses, <code>FraudRuleRecord</code> represents rule management screens, and <code>SessionUser</code> represents the authenticated analyst stored in the Struts session. No OpenAPI, Swagger, protobuf, or GraphQL contract definitions were found. Serialization is minimal; the only explicit remote response parsing is a manual JSON string lookup for <code>sessionToken</code> in <code>SsoSessionService</code>, while the browser-facing surface uses JSP rendering instead of JSON APIs.</p>
+<h2 id="communication-patterns">Communication Patterns</h2>
+<p>All application communication is synchronous. Browser requests are routed through Struts actions and most are intercepted by <code>AuthTokenInterceptor</code>, which either reuses a session user or calls <code>SsoSessionService</code> to validate a token. <code>SsoSessionService</code> checks tokens against SQL Server directly and can fall back to a hard-coded auth gateway URL to resolve the <code>.ZAVAAUTH</code> cookie. There is no asynchronous messaging, service discovery, retry framework, circuit breaker, or client-side load balancing. API-level security is limited to the custom interceptor and token lookup flow; no TLS termination, JWT support, or role-based authorization annotations were found, and the auth gateway URL uses HTTP.</p>
+<h2 id="service-technology-matrix">Service Technology Matrix</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Service</th><th>Web</th><th>Data Access</th><th>Discovery</th><th>Gateway</th><th>Actuator</th><th>Cache</th><th>Metrics</th>
+</tr></thead><tbody>
+<tr><td>ZavaFraudDetector</td><td>Struts 2 and JSP</td><td>Direct JDBC</td><td>None</td><td>No</td><td>Custom health action only</td><td>None</td><td>None</td></tr>
+<tr><td>ZavaAuthGateway</td><td>ASP.NET endpoint consumer only</td><td>N/A</td><td>None</td><td>Auth helper</td><td>Unknown</td><td>None</td><td>None</td></tr>
+<tr><td>SQL Server</td><td>N/A</td><td>N/A</td><td>None</td><td>No</td><td>N/A</td><td>N/A</td><td>N/A</td></tr>
+</tbody></table></div>
+<h2 id="service-communication-sequence">Service Communication Sequence</h2>
+<div class="mermaid">
+sequenceDiagram
+    participant Analyst
+    participant Web as "ZavaFraudDetector"
+    participant Interceptor as "AuthTokenInterceptor"
+    participant SSO as "SsoSessionService"
+    participant Gateway as "ZavaAuthGateway"
+    participant DB as "SQL Server"
+
+    Analyst->>Web: GET /flaggedQueue.action
+    Web->>Interceptor: apply interceptor stack
+    alt Session user already present
+        Interceptor-->>Web: continue request
+    else Need to resolve identity
+        Interceptor->>SSO: resolveSessionUser(request, explicitToken)
+        alt Session token present in param or header
+            SSO->>DB: query SessionTokens and Users
+            DB-->>SSO: matching user or no row
+        else Cookie only
+            SSO->>Gateway: GET WhoAmI with .ZAVAAUTH cookie
+            Gateway-->>SSO: JSON sessionToken
+            SSO->>DB: query SessionTokens and Users
+            DB-->>SSO: matching user or no row
+        end
+        SSO-->>Interceptor: SessionUser or null
+    end
+    alt Authenticated
+        Web->>DB: query FraudAlerts with account and transaction joins
+        DB-->>Web: alert rows
+        Web-->>Analyst: Render flagged queue JSP
+    else Authentication failed
+        Web-->>Analyst: Redirect to login page
+    end
+</div></div>
+</div>
+<div id="tab-config" class="tab-panel">
+  <div class="fact-content"><h1 id="configuration-externalized-settings-inventory">Configuration & Externalized Settings Inventory</h1>
+<p>The application has a small configuration surface centered on one properties file, Struts XML, the servlet descriptor, Gradle build metadata, and a Dockerfile. It supports environment-variable overrides for its core connection settings but does not define explicit build or runtime profiles.</p>
+<h2 id="configuration-sources">Configuration Sources</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Source</th><th>Type</th><th>Path/Location</th><th>Notes</th>
+</tr></thead><tbody>
+<tr><td>Gradle build</td><td>Build configuration</td><td><code>build.gradle</code></td><td>Declares Java, WAR, Struts, and SQL Server JDBC dependencies</td></tr>
+<tr><td>Struts configuration</td><td>Framework XML</td><td><code>src/main/resources/struts.xml</code></td><td>Defines actions, interceptor stack, and result mappings</td></tr>
+<tr><td>Application properties</td><td>Properties file</td><td><code>src/main/resources/frauddetector.properties</code></td><td>Holds DB and SSO settings with environment override support</td></tr>
+<tr><td>Servlet descriptor</td><td>XML</td><td><code>src/main/webapp/WEB-INF/web.xml</code></td><td>Maps Struts filter to all requests and sets welcome file</td></tr>
+<tr><td>Dockerfile</td><td>Container build config</td><td><code>Dockerfile</code></td><td>Builds a WAR and deploys it to Tomcat on port 8080</td></tr>
+<tr><td>Environment variables</td><td>External runtime config</td><td>Process environment</td><td>Override DB host, port, name, credentials, and auth gateway settings</td></tr>
+</tbody></table></div>
+<h2 id="build-profiles">Build Profiles</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Profile</th><th>Activation</th><th>Purpose</th><th>Key Dependencies/Plugins</th>
+</tr></thead><tbody>
+<tr><td>default</td><td>Always active</td><td>Builds a Java 11 WAR archive named <code>ROOT.war</code></td><td>Gradle <code>java</code> and <code>war</code> plugins</td></tr>
+</tbody></table></div>
+<h2 id="runtime-profiles">Runtime Profiles</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Profile</th><th>Activation Method</th><th>Config Files</th><th>Key Overrides</th>
+</tr></thead><tbody>
+<tr><td>default</td><td>Implicit</td><td><code>frauddetector.properties</code>, <code>struts.xml</code>, <code>web.xml</code></td><td>DB host, port, name, user, password, SSO cookie name, auth gateway URL</td></tr>
+</tbody></table></div>
+<h2 id="properties-inventory">Properties Inventory</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Property Key</th><th>Default</th><th>Profiles</th><th>Source</th>
+</tr></thead><tbody>
+<tr><td><code>db.host</code></td><td><code>sqlserver</code></td><td>default</td><td><code>frauddetector.properties</code>, override <code>DB_HOST</code></td></tr>
+<tr><td><code>db.port</code></td><td><code>1433</code></td><td>default</td><td><code>frauddetector.properties</code>, override <code>DB_PORT</code></td></tr>
+<tr><td><code>db.name</code></td><td><code>ZavaBankDB</code></td><td>default</td><td><code>frauddetector.properties</code>, override <code>DB_NAME</code></td></tr>
+<tr><td><code>db.user</code></td><td><code>sa</code></td><td>default</td><td><code>frauddetector.properties</code>, override <code>DB_USER</code></td></tr>
+<tr><td><code>db.password</code></td><td><code>[MASKED]</code></td><td>default</td><td><code>frauddetector.properties</code>, override <code>DB_PASSWORD</code></td></tr>
+<tr><td><code>sso.cookie.name</code></td><td><code>.ZAVAAUTH</code></td><td>default</td><td><code>frauddetector.properties</code>, override <code>SSO_COOKIE_NAME</code></td></tr>
+<tr><td><code>auth.gateway.whoami.url</code></td><td><code>http://zava-auth-gateway:8080/WhoAmI.ashx</code></td><td>default</td><td><code>frauddetector.properties</code>, override <code>AUTH_GATEWAY_WHOAMI_URL</code></td></tr>
+<tr><td><code>struts.devMode</code></td><td><code>false</code></td><td>default</td><td><code>struts.xml</code></td></tr>
+</tbody></table></div>
+<h2 id="startup-parameters-resource-requirements">Startup Parameters & Resource Requirements</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Service</th><th>JVM/Runtime Options</th><th>Memory</th><th>Instance Count</th>
+</tr></thead><tbody>
+<tr><td>ZavaFraudDetector</td><td>No explicit JVM flags detected; starts via <code>catalina.sh run</code></td><td>Not specified</td><td>1 by default</td></tr>
+</tbody></table></div>
+<h2 id="startup-dependency-chain">Startup Dependency Chain</h2>
+<ol>
+<li>ZavaFraudDetector container starts Tomcat and loads <code>frauddetector.properties</code> from the classpath.</li>
+<li>Authenticated workflows depend on SQL Server being reachable at <code>sqlserver:1433</code>.</li>
+<li>Cookie-based authentication also depends on the auth gateway URL being reachable before protected requests can complete.</li>
+<li><code>/health.action</code> is the only endpoint that does not require the custom auth interceptor.</li>
+</ol>
+<h2 id="secrets-sensitive-configuration">Secrets & Sensitive Configuration</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Secret Reference</th><th>Type</th><th>Storage (masked)</th>
+</tr></thead><tbody>
+<tr><td><code>db.password</code></td><td>Database password</td><td>Source-controlled properties file or <code>DB_PASSWORD</code> environment variable</td></tr>
+<tr><td><code>db.user</code></td><td>Database user</td><td>Source-controlled properties file or <code>DB_USER</code> environment variable</td></tr>
+<tr><td><code>SessionTokens.Token</code> usage</td><td>Session credential</td><td>SQL Server table validated at runtime</td></tr>
+</tbody></table></div>
+<h3 id="secrets-provisioning-workflow">Secrets Provisioning Workflow</h3>
+<p>The current implementation reads secrets from the local properties file first, then allows environment variables to override them at runtime. No external secret manager, managed identity, encrypted configuration, or deployment-time provisioning workflow was found, so secret distribution depends on either the checked-in properties file or container environment injection.</p>
+<h2 id="feature-flags">Feature Flags</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Flag Name</th><th>Default</th><th>Controlled By</th>
+</tr></thead><tbody>
+<tr><td>None detected</td><td>N/A</td><td>No conditional feature flags or profile-based feature toggles were found</td></tr>
+</tbody></table></div>
+<h2 id="framework-runtime-versions">Framework & Runtime Versions</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Component</th><th>Version</th><th>Source</th>
+</tr></thead><tbody>
+<tr><td>Java</td><td>11</td><td><code>build.gradle</code> source and target compatibility</td></tr>
+<tr><td>Gradle build logic</td><td>Compatible with Gradle 7.x style</td><td><code>build.gradle</code> and Docker build stage</td></tr>
+<tr><td>Apache Struts</td><td>2.5.30</td><td><code>build.gradle</code></td></tr>
+<tr><td>Servlet API</td><td>4.0.1</td><td><code>build.gradle</code></td></tr>
+<tr><td>SQL Server JDBC Driver</td><td>12.8.1.jre11</td><td><code>build.gradle</code></td></tr>
+<tr><td>Tomcat</td><td>9.0-jdk11</td><td><code>Dockerfile</code></td></tr>
+<tr><td>Gradle image</td><td>7.6-jdk11</td><td><code>Dockerfile</code></td></tr>
+</tbody></table></div></div>
+</div>
+<div id="tab-workflows" class="tab-panel">
+  <div class="fact-content"><h1 id="core-business-workflows">Core Business Workflows</h1>
+<p>This application supports fraud analysts who investigate transaction alerts and maintain the rule set that drives fraud detection. Its main business flows revolve around secure analyst access, queue-based alert triage, decision capture, and rule administration.</p>
+<h2 id="domain-entities">Domain Entities</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Entity</th><th>Service / Bounded Context</th><th>Description</th><th>Key Relationships</th>
+</tr></thead><tbody>
+<tr><td>Fraud Alert</td><td>Fraud Operations</td><td>A flagged transaction awaiting analyst review or resolution</td><td>Links to account and transaction data; updated by analyst decisions</td></tr>
+<tr><td>Fraud Rule</td><td>Fraud Operations</td><td>A configurable rule that describes how suspicious activity is detected</td><td>Maintained by analysts and referenced conceptually by alert generation</td></tr>
+<tr><td>Session User</td><td>Identity and Access</td><td>Authenticated analyst identity stored in the session</td><td>Derived from session token validation</td></tr>
+<tr><td>Session Token</td><td>Identity and Access</td><td>Credential that proves the analyst session is active</td><td>Belongs to a user and may originate from the auth gateway cookie flow</td></tr>
+<tr><td>Account</td><td>Core Banking Reference</td><td>Customer account tied to a fraud alert</td><td>Joined into alert views</td></tr>
+<tr><td>Transaction</td><td>Core Banking Reference</td><td>Monetary activity behind a fraud alert</td><td>Joined into alert views</td></tr>
+</tbody></table></div>
+<h2 id="service-to-domain-mapping">Service-to-Domain Mapping</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Service</th><th>Domain Context</th><th>Owned Entities</th><th>External Dependencies</th>
+</tr></thead><tbody>
+<tr><td>ZavaFraudDetector</td><td>Fraud Operations</td><td>Fraud Alert, Fraud Rule, Session User view model</td><td>SQL Server, ZavaAuthGateway</td></tr>
+<tr><td>ZavaAuthGateway</td><td>Identity and Access</td><td>Session token resolution only</td><td>.NET auth infrastructure</td></tr>
+<tr><td>SQL Server</td><td>Persistence</td><td>FraudAlerts, FraudRules, Accounts, Transactions, SessionTokens, Users</td><td>None</td></tr>
+</tbody></table></div>
+<h2 id="primary-workflows">Primary Workflows</h2>
+<h3 id="workflow-1-analyst-signs-in">Workflow 1: Analyst signs in</h3>
+<p>An analyst reaches <code>login.action</code> and submits a session token, or the application extracts a token from the request headers or cookie. <code>SsoSessionService</code> validates the token against the <code>SessionTokens</code> and <code>Users</code> tables, stores a <code>SessionUser</code> in the Struts session, and redirects the analyst to the flagged alert queue. If validation fails, the login form returns an error.</p>
+<h3 id="workflow-2-analyst-reviews-and-resolves-a-fraud-alert">Workflow 2: Analyst reviews and resolves a fraud alert</h3>
+<p>An authenticated analyst opens <code>flaggedQueue.action</code>, which loads up to 100 alerts with <code>New</code> or <code>InReview</code> status ordered by newest first. From the queue, the analyst opens <code>transactionDetail.action</code>, inspects the alert context, then submits <code>alertDecision.action</code> with <code>Approved</code> or <code>Rejected</code> plus optional notes. The decision flow updates alert status, resolution notes, and timestamps in SQL Server.</p>
+<h3 id="workflow-3-analyst-maintains-fraud-rules">Workflow 3: Analyst maintains fraud rules</h3>
+<p>An authenticated analyst opens <code>rules.action</code> to review the configured rule set. The analyst can create a rule, edit an existing rule, or delete a rule, and <code>RuleEditAction</code> applies simple validation to require a name and severity while parsing optional threshold and time-window values before saving.</p>
+<h2 id="cross-service-data-flows">Cross-Service Data Flows</h2>
+<p>The application is not decomposed into multiple source-built services, so most business flows stay inside one Java web app backed by one database. The only cross-service data flow is the cookie-based SSO path: the Java application forwards the <code>.ZAVAAUTH</code> cookie to the auth gateway, extracts a <code>sessionToken</code> from the response, and then validates that token locally in SQL Server. If the gateway is unavailable, cookie-based sign-in degrades and the analyst must provide a direct session token.</p>
+<h2 id="business-workflow-sequence">Business Workflow Sequence</h2>
+<div class="mermaid">
+sequenceDiagram
+    participant Analyst
+    participant Web as "ZavaFraudDetector"
+    participant SSO as "SsoSessionService"
+    participant Gateway as "ZavaAuthGateway"
+    participant DB as "SQL Server"
+
+    Analyst->>Web: Open flagged queue
+    Web->>SSO: Resolve analyst identity
+    alt Direct token available
+        SSO->>DB: Validate session token
+        DB-->>SSO: Analyst user
+    else Cookie-based sign in
+        SSO->>Gateway: Resolve .ZAVAAUTH cookie
+        alt Gateway available
+            Gateway-->>SSO: sessionToken JSON
+            SSO->>DB: Validate session token
+            DB-->>SSO: Analyst user
+        else Gateway unavailable
+            Note over Web: Analyst is redirected to login
+        end
+    end
+    Web->>DB: Load newest New or InReview alerts
+    DB-->>Web: Alert queue
+    Web-->>Analyst: Show queue and detail form
+    Analyst->>Web: Submit approve or reject decision
+    Web->>DB: Update alert status and notes
+    DB-->>Web: Decision saved
+    Web-->>Analyst: Return to updated queue
+</div>
+<h2 id="business-rules-decision-logic">Business Rules & Decision Logic</h2>
+<ul>
+<li>Protected workflows require an authenticated <code>SessionUser</code>; only <code>login</code> and <code>health</code> bypass the custom interceptor.</li>
+<li>Alert queue processing is limited to alerts whose status is <code>New</code> or <code>InReview</code>, ordered by most recent creation time.</li>
+<li><code>AlertDecisionAction</code> maps only the literal <code>Approved</code> value to an approved state; any other non-empty decision is treated as <code>Rejected</code>.</li>
+<li>Rule maintenance requires a non-empty rule name and severity, while threshold amount and time window must parse as numeric values when provided.</li>
+<li>Alert decision updates append analyst identity text to the resolution notes, creating a lightweight audit trail.</li>
+</ul></div>
+</div>
+<div id="tab-deps" class="tab-panel">
+  <div class="fact-content"><h1 id="dependency-map">Dependency Map</h1>
+<p>This project declares three production dependencies and no explicit test dependencies in Gradle. The dependency set is compact and centers on a legacy Struts web stack, SQL Server connectivity, and servlet container APIs.</p>
+<h2 id="dependencies">Dependencies</h2>
+<div class="mermaid">
+flowchart LR
+    App["ZavaFraudDetector"]
+
+    subgraph Web["Web Frameworks"]
+        Struts["Apache Struts 2.5.30"]
+        Servlet["Servlet API 4.0.1"]
+    end
+    subgraph DB["Database and ORM"]
+        SqlDriver["SQL Server JDBC 12.8.1.jre11"]
+    end
+    subgraph Util["Utilities"]
+        Note["No additional utility libraries"]
+    end
+
+    App -->|"web"| Web
+    App -->|"persistence"| DB
+    App -->|"support"| Util
+    Struts -.->|"runs on servlet container"| Servlet
+</div>
+<h3 id="dependency-summary">Dependency Summary</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Category</th><th>Count</th><th>Key Libraries</th><th>Notes</th>
+</tr></thead><tbody>
+<tr><td>Web Frameworks</td><td>2</td><td>Apache Struts 2.5.30, Servlet API 4.0.1</td><td>Legacy MVC stack packaged as a WAR</td></tr>
+<tr><td>Database and ORM</td><td>1</td><td>Microsoft SQL Server JDBC 12.8.1.jre11</td><td>Direct JDBC driver with no ORM abstraction</td></tr>
+<tr><td>Utilities</td><td>0</td><td>None</td><td>The application relies mostly on JDK classes</td></tr>
+</tbody></table></div>
+<h3 id="version-compatibility-risks">Version & Compatibility Risks</h3>
+<p>The project depends on Apache Struts 2.5.x and <code>javax.servlet</code> APIs, which increases migration effort for newer Jakarta-based Java runtimes and modern frameworks. The application is also tightly coupled to a Tomcat WAR deployment model and SQL Server-specific JDBC connectivity, which adds cloud-hosting and portability work.</p>
+<h3 id="notable-observations">Notable Observations</h3>
+<ul>
+<li>There is no dependency for testing, connection pooling, validation, or observability declared in Gradle.</li>
+<li>The web tier is framework-heavy relative to the overall code size because request handling depends on Struts XML configuration and JSP tags.</li>
+<li>SQL access is handled directly through the JDBC driver, so database portability and dependency injection support are limited.</li>
+</ul>
+<h2 id="test-dependencies">Test Dependencies</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Framework</th><th>Version</th><th>Notes</th>
+</tr></thead><tbody>
+<tr><td>None detected</td><td>N/A</td><td>No test-scoped dependencies are declared in <code>build.gradle</code></td></tr>
+</tbody></table></div>
+<p>Total test-scope dependencies: 0</p>
+<p>No test dependencies were detected, and the repository also lacks a Gradle wrapper. Existing validation depends on the local Gradle installation and currently fails before tests execute.</p></div>
+</div>
+<div id="tab-data" class="tab-panel">
+  <div class="fact-content"><h1 id="data-architecture-persistence-layer">Data Architecture & Persistence Layer</h1>
+<p>The data layer consists of a single SQL Server database accessed through raw JDBC, plus a handful of mutable record classes that mirror result sets for the JSP views. No ORM, repository framework, schema migration tool, or cache provider is present.</p>
+<h2 id="database-configuration">Database Configuration</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Service/Module</th><th>DB Type</th><th>Profile</th><th>Driver</th><th>Connection</th><th>Migration Tool</th>
+</tr></thead><tbody>
+<tr><td>ZavaFraudDetector</td><td>SQL Server</td><td>Default</td><td>Microsoft JDBC Driver 12.8.1.jre11</td><td><code>jdbc:sqlserver://sqlserver:1433;databaseName=ZavaBankDB;encrypt=false;trustServerCertificate=true</code> with environment overrides</td><td>None detected</td></tr>
+</tbody></table></div>
+<h2 id="data-ownership-per-service">Data Ownership per Service</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Service</th><th>Tables Owned</th><th>ORM Framework</th><th>Caching</th><th>Notes</th>
+</tr></thead><tbody>
+<tr><td>ZavaFraudDetector</td><td>FraudAlerts, FraudRules, Accounts, Transactions, SessionTokens, Users</td><td>None, direct JDBC</td><td>None</td><td>Single shared operational database for alert review, rule admin, and session validation</td></tr>
+</tbody></table></div>
+<h2 id="entity-model">Entity Model</h2>
+<div class="mermaid">
+erDiagram
+    Accounts ||--o{ FraudAlerts : "owns"
+    Transactions ||--o{ FraudAlerts : "triggers"
+    Users ||--o{ SessionTokens : "receives"
+    FraudAlerts {
+        int AlertID PK
+        long TransactionID FK
+        string AlertType
+        string Severity
+        string Status
+        string Description
+        datetime CreatedDate
+        datetime ResolvedDate
+        string ResolutionNotes
+    }
+    FraudRules {
+        int RuleID PK
+        string RuleName
+        string RuleDescription
+        string RuleExpression
+        string Severity
+        decimal ThresholdAmount
+        int TimeWindowMinutes
+        bool IsActive
+    }
+    Accounts {
+        int AccountID PK
+        string AccountNumber
+    }
+    Transactions {
+        long TransactionID PK
+        decimal Amount
+    }
+    Users {
+        int UserID PK
+        string Username
+        bool IsActive
+    }
+    SessionTokens {
+        string Token PK
+        int UserID FK
+        datetime ExpiresAt
+        bool IsActive
+    }
+</div>
+<h2 id="key-repository-methods">Key Repository Methods</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Service</th><th>Repository</th><th>Notable Methods</th><th>Purpose</th>
+</tr></thead><tbody>
+<tr><td>ZavaFraudDetector</td><td><code>FraudConnectionFactory</code></td><td><code>openConnection()</code></td><td>Creates a new JDBC connection for every request path</td></tr>
+<tr><td>ZavaFraudDetector</td><td><code>SsoSessionService</code></td><td><code>resolveSessionUser(HttpServletRequest, String)</code></td><td>Validates a token against <code>SessionTokens</code> and <code>Users</code></td></tr>
+<tr><td>ZavaFraudDetector</td><td><code>FlaggedQueueAction</code></td><td>Inline <code>SELECT TOP 100 ... FROM FraudAlerts ...</code></td><td>Loads open alert queue rows with joined account and transaction data</td></tr>
+<tr><td>ZavaFraudDetector</td><td><code>TransactionDetailAction</code></td><td>Inline <code>SELECT TOP 1 ... WHERE fa.AlertID = ?</code></td><td>Loads a single alert for analyst review</td></tr>
+<tr><td>ZavaFraudDetector</td><td><code>AlertDecisionAction</code></td><td>Inline <code>UPDATE FraudAlerts SET Status = ?, ResolutionNotes = ? ...</code></td><td>Persists analyst approval or rejection decisions</td></tr>
+<tr><td>ZavaFraudDetector</td><td><code>RuleListAction</code></td><td>Inline <code>SELECT ... FROM FraudRules ORDER BY RuleID</code></td><td>Lists all configured fraud rules</td></tr>
+<tr><td>ZavaFraudDetector</td><td><code>RuleEditAction</code></td><td>Inline <code>INSERT</code> and <code>UPDATE</code> statements for <code>FraudRules</code></td><td>Creates and updates fraud rules</td></tr>
+<tr><td>ZavaFraudDetector</td><td><code>RuleDeleteAction</code></td><td>Inline <code>DELETE FROM FraudRules WHERE RuleID = ?</code></td><td>Removes a rule</td></tr>
+</tbody></table></div>
+<h2 id="caching-strategy">Caching Strategy</h2>
+<p>No application cache was detected. Every action opens a fresh JDBC connection and executes live SQL, while authenticated identity is cached only in the Struts HTTP session after successful token resolution. There is no cache-aside, distributed cache, second-level cache, or query result cache configuration.</p>
+<h2 id="data-ownership-boundaries">Data Ownership Boundaries</h2>
+<p>The application uses a single shared database and does not separate read and write models. Cross-domain access happens through direct table joins inside the Struts action classes rather than through service APIs or repository abstractions. Session validation, alert review, and rule management all read and write the same store, so the application treats the database as the integration boundary.</p>
+<h3 id="data-classification-sensitivity">Data Classification & Sensitivity</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Entity</th><th>Sensitive Fields</th><th>Classification</th><th>Controls in Place</th>
+</tr></thead><tbody>
+<tr><td>Accounts</td><td><code>AccountNumber</code></td><td>PII and financial identifier</td><td>No masking detected in storage or views</td></tr>
+<tr><td>Transactions</td><td><code>Amount</code></td><td>Financial data</td><td>No special controls detected</td></tr>
+<tr><td>Users</td><td><code>Username</code></td><td>PII</td><td>Session-based access only</td></tr>
+<tr><td>SessionTokens</td><td><code>Token</code></td><td>Sensitive credential</td><td>Expiry and active-state validation only</td></tr>
+<tr><td>FraudAlerts</td><td><code>Description</code>, linked account and transaction data</td><td>Confidential operational data</td><td>No encryption or masking detected</td></tr>
+<tr><td>FraudRules</td><td>Rule definitions and thresholds</td><td>Internal</td><td>No special controls detected</td></tr>
+</tbody></table></div></div>
+</div>
+<p class="footer">Your feedback is invaluable &mdash; <a href="https://aka.ms/ghcp-appmod/feedback">Share feedback</a></p>
+<script>
+function toggleRow(rowId, triggerRow) {
+  var detail = document.getElementById(rowId);
+  var btn = document.getElementById('btn-' + rowId);
+  if (!detail) return;
+  var visible = detail.style.display !== 'none';
+  detail.style.display = visible ? 'none' : 'table-row';
+  if (btn) btn.classList.toggle('open', !visible);
+}
+(function() {
+  var nav = document.querySelector('.tab-nav');
+  if (!nav) return;
+  nav.addEventListener('click', function(e) {
+    var btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    var targetId = btn.getAttribute('data-tab');
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+    btn.classList.add('active');
+    var panel = document.getElementById(targetId);
+    if (panel) {
+      panel.classList.add('active');
+      if (window.__mermaidReady) { window.__renderMermaidIn(panel); }
+    }
+  });
+})();
+
+// ── Diagram lightbox ────────────────────────────────────────
+(function() {
+  var lightbox = document.getElementById('diagram-lightbox');
+  var inner = document.getElementById('diagram-lightbox-inner');
+  var closeBtn = document.getElementById('diagram-lightbox-close');
+  if (!lightbox || !inner || !closeBtn) return;
+
+  var scale = 1;
+  var translateX = 0;
+  var translateY = 0;
+  var isDragging = false;
+  var dragStartX = 0;
+  var dragStartY = 0;
+
+  function applyTransform() {
+    var svg = inner.querySelector('svg');
+    if (svg) {
+      svg.style.transform = 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + scale + ')';
+      svg.style.transformOrigin = 'center center';
+      svg.style.transition = 'none';
+    }
+  }
+
+  function resetTransform() {
+    scale = 1; translateX = 0; translateY = 0;
+    applyTransform();
+  }
+
+  function openLightbox(svgEl) {
+    inner.innerHTML = svgEl.outerHTML;
+    var injected = inner.querySelector('svg');
+    if (injected) {
+      injected.removeAttribute('width');
+      injected.removeAttribute('height');
+      injected.style.cursor = 'grab';
+    }
+    resetTransform();
+    lightbox.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    lightbox.classList.remove('open');
+    inner.innerHTML = '';
+    document.body.style.overflow = '';
+    resetTransform();
+  }
+
+  inner.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    var delta = e.deltaY > 0 ? 0.9 : 1.1;
+    scale = Math.min(Math.max(scale * delta, 0.3), 8);
+    applyTransform();
+  }, { passive: false });
+
+  inner.addEventListener('mousedown', function(e) {
+    if (e.button !== 0) return;
+    isDragging = true;
+    dragStartX = e.clientX - translateX;
+    dragStartY = e.clientY - translateY;
+    var svg = inner.querySelector('svg');
+    if (svg) { svg.style.cursor = 'grabbing'; }
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!isDragging) return;
+    translateX = e.clientX - dragStartX;
+    translateY = e.clientY - dragStartY;
+    applyTransform();
+  });
+
+  document.addEventListener('mouseup', function() {
+    if (!isDragging) return;
+    isDragging = false;
+    var svg = inner.querySelector('svg');
+    if (svg) { svg.style.cursor = 'grab'; }
+  });
+
+  inner.addEventListener('dblclick', function() { resetTransform(); });
+
+  document.addEventListener('click', function(e) {
+    var card = e.target.closest('.mermaid');
+    if (!card) return;
+    if (e.target.closest('.diagram-lightbox-close')) return;
+    var svg = card.querySelector('svg');
+    if (svg) { openLightbox(svg); }
+  });
+
+  closeBtn.addEventListener('click', closeLightbox);
+
+  lightbox.addEventListener('click', function(e) {
+    if (e.target === lightbox) { closeLightbox(); }
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') { closeLightbox(); }
+  });
+})();
+
+var _currentTarget = '';
+
+function toggleMultiSelect(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  document.querySelectorAll('.multi-select.open').forEach(function(ms) { if (ms.id !== id) ms.classList.remove('open'); });
+  el.classList.toggle('open');
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.multi-select')) {
+    document.querySelectorAll('.multi-select.open').forEach(function(ms) { ms.classList.remove('open'); });
+  }
+});
+
+function getMultiSelectValues(msId) {
+  var el = document.getElementById(msId);
+  if (!el) return [];
+  var checked = el.querySelectorAll('input[type=checkbox]:checked');
+  var vals = [];
+  for (var i = 0; i < checked.length; i++) vals.push(checked[i].value);
+  return vals;
+}
+
+function onMultiSelectChange(msId, label) {
+  var el = document.getElementById(msId);
+  if (!el) return;
+  var vals = getMultiSelectValues(msId);
+  var total = el.querySelectorAll('input[type=checkbox]').length;
+  var btn = el.querySelector('.multi-select-btn');
+  if (btn) {
+    btn.textContent = vals.length > 0 && vals.length < total ? label + ' (' + vals.length + ')' : label;
+  }
+  applyFilters();
+}
+
+function applyFilters() {
+  var selectedDomains = getMultiSelectValues('domain-ms');
+  var selectedCrits = getMultiSelectValues('criticality-ms');
+
+  var sections = document.querySelectorAll('.issue-section');
+  for (var i = 0; i < sections.length; i++) {
+    var domain = sections[i].getAttribute('data-domain');
+    sections[i].style.display = (selectedDomains.length === 0 || selectedDomains.indexOf(domain) >= 0) ? '' : 'none';
+  }
+
+  var rows = document.querySelectorAll('.issue-row');
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i];
+    var section = row.closest('.issue-section');
+    if (section && section.style.display === 'none') {
+      row.style.display = 'none';
+      var next = row.nextElementSibling;
+      if (next && next.classList.contains('detail-row')) next.style.display = 'none';
+      continue;
+    }
+
+    var show = true;
+    if (_currentTarget && row.hasAttribute('data-targets')) {
+      var targetsStr = row.getAttribute('data-targets');
+      if (targetsStr && targetsStr !== '{}') {
+        try {
+          var targets = JSON.parse(targetsStr);
+          if (Object.keys(targets).length > 0 && !targets[_currentTarget]) {
+            show = false;
+          }
+        } catch(e) {}
+      }
+    }
+
+    if (show && selectedCrits.length > 0) {
+      var crit = row.getAttribute('data-criticality');
+      if (selectedCrits.indexOf(crit) < 0) show = false;
+    }
+
+    row.style.display = show ? '' : 'none';
+    var nextRow = row.nextElementSibling;
+    if (nextRow && nextRow.classList.contains('detail-row')) {
+      if (!show) nextRow.style.display = 'none';
+    }
+  }
+}
+
+function clearAllFilters() {
+  document.querySelectorAll('.multi-select input[type=checkbox]').forEach(function(cb) { cb.checked = false; });
+  var domainBtn = document.querySelector('#domain-ms .multi-select-btn');
+  if (domainBtn) domainBtn.textContent = 'Domain';
+  var critBtn = document.querySelector('#criticality-ms .multi-select-btn');
+  if (critBtn) critBtn.textContent = 'Criticality';
+  applyFilters();
+}
+
+function onTargetChange(targetId) {
+  _currentTarget = targetId;
+  var rows = document.querySelectorAll('.issue-row[data-targets]');
+  var totalEffort = 0;
+  var domainCrits = {};
+
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i];
+    var targets = JSON.parse(row.getAttribute('data-targets'));
+    var section = row.closest('.issue-section');
+    var domain = section ? section.getAttribute('data-domain') : '';
+
+    if (!targets || Object.keys(targets).length === 0) {
+      var sp = parseFloat(row.querySelector('.sp-cell').textContent) || 0;
+      totalEffort += sp;
+      if (!domainCrits[domain]) domainCrits[domain] = {mandatory:0,potential:0,optional:0};
+      var crit = row.getAttribute('data-criticality') || 'optional';
+      domainCrits[domain][crit] = (domainCrits[domain][crit] || 0) + 1;
+      continue;
+    }
+
+    var override = targets[targetId];
+    if (!override) {
+      continue;
+    }
+
+    var newSeverity = (override.severity || row.getAttribute('data-default-severity') || '').toLowerCase();
+    row.setAttribute('data-criticality', newSeverity);
+    var critCell = row.querySelector('.crit-cell');
+    if (critCell) {
+      var critText = newSeverity === 'mandatory' ? 'Mandatory' : newSeverity === 'potential' ? 'Potential' : 'Optional';
+      var cssClass = newSeverity === 'mandatory' ? 'crit-square-mandatory' : newSeverity === 'potential' ? 'crit-square-potential' : 'crit-square-optional';
+      critCell.innerHTML = '<span class="crit-label"><span class="crit-square ' + cssClass + '"></span>' + critText + '</span>';
+    }
+
+    var newEffort = override.effort !== undefined ? override.effort : parseFloat(row.getAttribute('data-default-effort')) || 0;
+    var spCell = row.querySelector('.sp-cell');
+    if (spCell) spCell.textContent = newEffort;
+    totalEffort += newEffort;
+
+    if (!domainCrits[domain]) domainCrits[domain] = {mandatory:0,potential:0,optional:0};
+    domainCrits[domain][newSeverity] = (domainCrits[domain][newSeverity] || 0) + 1;
+  }
+
+  var secSection = document.querySelector('.issue-section[data-domain="security"]');
+  if (secSection) {
+    var secRows = secSection.querySelectorAll('.issue-row');
+    for (var j = 0; j < secRows.length; j++) {
+      if (!secRows[j].hasAttribute('data-targets') || secRows[j].getAttribute('data-targets') === '') {
+        var sp = parseFloat(secRows[j].querySelector('.sp-cell').textContent) || 0;
+        totalEffort += sp;
+        if (!domainCrits['security']) domainCrits['security'] = {mandatory:0,potential:0,optional:0};
+        var sc = secRows[j].getAttribute('data-criticality') || 'optional';
+        domainCrits['security'][sc] = (domainCrits['security'][sc] || 0) + 1;
+      }
+    }
+  }
+
+  var label = totalEffort < 20 ? 'S' : totalEffort < 50 ? 'M' : totalEffort < 100 ? 'L' : 'XL';
+  var effortEl = document.getElementById('effort-display');
+  if (effortEl) effortEl.textContent = label + ' (total story points: ' + totalEffort + ')';
+
+  updateDonuts(domainCrits);
+  applyFilters();
+}
+
+function updateDonuts(domainCrits) {
+  var container = document.getElementById('donut-container');
+  if (!container) return;
+  container.innerHTML = '';
+  var domainNames = {'cloud-readiness':'Cloud Readiness','java-upgrade':'Java Upgrade','dotnet-upgrade':'DotNET Upgrade','security':'Security'};
+  var domainOrder = ['cloud-readiness','java-upgrade','dotnet-upgrade','security'];
+  for (var d = 0; d < domainOrder.length; d++) {
+    var key = domainOrder[d];
+    var c = domainCrits[key];
+    if (!c || (c.mandatory + c.potential + c.optional) === 0) continue;
+    var total = c.mandatory + c.potential + c.optional;
+    var div = document.createElement('div');
+    div.className = 'domain-summary-item';
+    div.innerHTML = buildDonutSvg(c.mandatory, c.potential, c.optional) +
+      '<h3>' + domainNames[key] + '</h3>' +
+      '<div class="count">' + total + ' issue' + (total !== 1 ? 's' : '') + '</div>';
+    container.appendChild(div);
+  }
+}
+
+function buildDonutSvg(m, p, o) {
+  var total = m + p + o;
+  if (total === 0) return '<svg viewBox="0 0 100 100" width="100" height="100" style="display:block;margin:0 auto;"><circle cx="50" cy="50" r="35" fill="none" stroke="#d0d7de" stroke-width="15" opacity="0.5"/></svg>';
+  var r = 35, circ = 2 * Math.PI * r, offset = 0;
+  var svg = '<svg viewBox="0 0 100 100" width="100" height="100" style="display:block;margin:0 auto;transform:rotate(-90deg);">';
+  var segs = [{c:m,color:'var(--color-mandatory)'},{c:p,color:'var(--color-potential)'},{c:o,color:'var(--color-optional)'}];
+  for (var i = 0; i < segs.length; i++) {
+    if (segs[i].c === 0) continue;
+    var segLen = (segs[i].c / total) * circ;
+    var gap = total > segs[i].c ? 1.5 : 0;
+    var drawLen = Math.max(segLen - gap, 0.5);
+    svg += '<circle cx="50" cy="50" r="' + r + '" fill="none" stroke="' + segs[i].color + '" stroke-width="15" stroke-dasharray="' + drawLen.toFixed(2) + ' ' + circ.toFixed(2) + '" stroke-dashoffset="' + (-offset).toFixed(2) + '"/>';
+    offset += segLen;
+  }
+  svg += '</svg>';
+  return svg;
+}
+</script>
+</div></body></html>

@@ -1,0 +1,237 @@
+{
+  "metadata": {
+    "tool": "manual-assessment",
+    "toolVersion": "best-effort",
+    "analysisStartTime": "2026-05-29T03:47:09Z",
+    "analysisCoverage": "full"
+  },
+  "rules": {
+    "java-struts2-framework": {
+      "title": "Modernize the Apache Struts 2 web framework",
+      "description": "The application depends on **Apache Struts 2.5.30** and XML-configured actions, which increases modernization effort for newer Java stacks. Moving to a supported framework and reducing Struts-specific configuration will be required before broader runtime upgrades.",
+      "severity": "mandatory",
+      "effort": 13,
+      "labels": [
+        "domain=java-upgrade"
+      ]
+    },
+    "jakarta-servlet-transition": {
+      "title": "Move from javax servlet APIs to Jakarta-compatible APIs",
+      "description": "The build still compiles against **javax.servlet 4.0.1** and deploys as a WAR. Modern Java application servers and frameworks increasingly require Jakarta namespaces, so API imports and deployment packaging will need review.",
+      "severity": "potential",
+      "effort": 8,
+      "labels": [
+        "domain=java-upgrade"
+      ]
+    },
+    "war-tomcat-deployment": {
+      "title": "Rework the WAR-based Tomcat deployment model for cloud hosting",
+      "description": "The current delivery model builds a **ROOT.war** and runs it inside a dedicated Tomcat image. Cloud-native targets usually prefer self-contained processes, simplified container images, and clearer runtime ownership than an external servlet container layer.",
+      "severity": "potential",
+      "effort": 8,
+      "labels": [
+        "domain=cloud-readiness"
+      ]
+    },
+    "raw-jdbc-sqlserver-coupling": {
+      "title": "Reduce direct JDBC and SQL Server coupling",
+      "description": "Business actions open JDBC connections directly and embed SQL statements inline. This creates tight coupling to SQL Server behavior, limits connection-pooling options, and makes future portability or observability improvements more difficult.",
+      "severity": "potential",
+      "effort": 5,
+      "labels": [
+        "domain=cloud-readiness"
+      ]
+    },
+    "external-auth-gateway-dependency": {
+      "title": "Externalize and harden the authentication gateway dependency",
+      "description": "Cookie-based authentication depends on a fixed **WhoAmI** endpoint on a separate gateway service. Cloud deployment will need a more robust integration strategy, including secure transport and resilient endpoint configuration.",
+      "severity": "potential",
+      "effort": 5,
+      "labels": [
+        "domain=cloud-readiness"
+      ]
+    }
+  },
+  "projects": [
+    {
+      "name": "mnm-ZavaFraudDetector",
+      "properties": {
+        "repo": "mnm-ZavaFraudDetector",
+        "appName": "ZavaFraudDetector",
+        "languages": [
+          "Java"
+        ],
+        "frameworks": [
+          "Apache Struts 2.5.30",
+          "JSP",
+          "Servlet API 4.0.1",
+          "JDBC"
+        ],
+        "tools": [
+          "Gradle",
+          "Docker"
+        ],
+        "jdkVersion": "11",
+        "applicationType": "Web App",
+        "description": "Server-rendered fraud analyst dashboard for reviewing alerts and managing fraud rules.",
+        "linesOfCode": 986,
+        "tags": [
+          "struts",
+          "tomcat",
+          "sql-server",
+          "fraud-operations"
+        ]
+      },
+      "incidents": [
+        {
+          "ruleId": "java-struts2-framework",
+          "location": "build.gradle",
+          "line": 18,
+          "targets": {
+            "azure-aks": {
+              "effort": 13,
+              "severity": "mandatory"
+            }
+          }
+        },
+        {
+          "ruleId": "java-struts2-framework",
+          "location": "src/main/resources/struts.xml",
+          "line": 8,
+          "targets": {
+            "azure-aks": {
+              "effort": 13,
+              "severity": "mandatory"
+            }
+          }
+        },
+        {
+          "ruleId": "jakarta-servlet-transition",
+          "location": "build.gradle",
+          "line": 17,
+          "targets": {
+            "azure-aks": {
+              "effort": 8,
+              "severity": "potential"
+            }
+          }
+        },
+        {
+          "ruleId": "jakarta-servlet-transition",
+          "location": "src/main/webapp/WEB-INF/web.xml",
+          "line": 2,
+          "targets": {
+            "azure-aks": {
+              "effort": 8,
+              "severity": "potential"
+            }
+          }
+        },
+        {
+          "ruleId": "war-tomcat-deployment",
+          "location": "build.gradle",
+          "line": 26,
+          "targets": {
+            "azure-aks": {
+              "effort": 8,
+              "severity": "potential"
+            }
+          }
+        },
+        {
+          "ruleId": "war-tomcat-deployment",
+          "location": "Dockerfile",
+          "line": 6,
+          "targets": {
+            "azure-aks": {
+              "effort": 8,
+              "severity": "potential"
+            }
+          }
+        },
+        {
+          "ruleId": "raw-jdbc-sqlserver-coupling",
+          "location": "src/main/java/com/zavabank/frauddetector/FraudConnectionFactory.java",
+          "line": 19,
+          "targets": {
+            "azure-aks": {
+              "effort": 5,
+              "severity": "potential"
+            }
+          }
+        },
+        {
+          "ruleId": "raw-jdbc-sqlserver-coupling",
+          "location": "src/main/java/com/zavabank/frauddetector/FlaggedQueueAction.java",
+          "line": 24,
+          "targets": {
+            "azure-aks": {
+              "effort": 5,
+              "severity": "potential"
+            }
+          }
+        },
+        {
+          "ruleId": "external-auth-gateway-dependency",
+          "location": "src/main/resources/frauddetector.properties",
+          "line": 7,
+          "targets": {
+            "azure-aks": {
+              "effort": 5,
+              "severity": "potential"
+            }
+          }
+        },
+        {
+          "ruleId": "external-auth-gateway-dependency",
+          "location": "src/main/java/com/zavabank/frauddetector/SsoSessionService.java",
+          "line": 93,
+          "targets": {
+            "azure-aks": {
+              "effort": 5,
+              "severity": "potential"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "security": [
+    {
+      "id": "CWE-259",
+      "title": "Hardcoded database credentials in source-controlled properties",
+      "severity": "mandatory",
+      "storyPoint": 8,
+      "evidence": {
+        "files": [
+          "src/main/resources/frauddetector.properties"
+        ]
+      }
+    },
+    {
+      "id": "CWE-319",
+      "title": "Cleartext or trust-bypassing transport for database and auth calls",
+      "severity": "mandatory",
+      "storyPoint": 8,
+      "evidence": {
+        "files": [
+          "src/main/java/com/zavabank/frauddetector/FraudConfig.java",
+          "src/main/resources/frauddetector.properties"
+        ]
+      }
+    },
+    {
+      "id": "CWE-598",
+      "title": "Session token accepted from URL query parameters",
+      "severity": "potential",
+      "storyPoint": 5,
+      "evidence": {
+        "files": [
+          "src/main/java/com/zavabank/frauddetector/SsoSessionService.java",
+          "src/main/webapp/WEB-INF/jsp/login.jsp"
+        ]
+      }
+    }
+  ],
+  "rearchitect": []
+}
