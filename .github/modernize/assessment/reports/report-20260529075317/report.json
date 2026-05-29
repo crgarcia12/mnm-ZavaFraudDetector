@@ -1,0 +1,665 @@
+{
+  "metadata": {
+    "analysisStartTime": "2026-05-29T07:53:17Z",
+    "targetDisplayNames": [
+      "Azure App Service",
+      "Azure Kubernetes Service",
+      "Azure Container Apps"
+    ],
+    "targetIds": [
+      "azure-appservice",
+      "azure-aks",
+      "azure-container-apps"
+    ]
+  },
+  "rules": {
+    "struts2-eol-framework": {
+      "title": "Apache Struts 2 has reached End-of-Life",
+      "description": "The application depends on Apache Struts 2 (version 2.5.30). The Struts 2.5.x maintenance branch reached End-of-Life on December 31, 2023. Struts 2 has been the source of multiple critical remote-code-execution CVEs (S2-045, S2-062, S2-066). Continuing to use an EOL framework exposes the application to unpatched vulnerabilities and blocks migration to Jakarta EE 10+ (which requires `jakarta.*` namespaces). Migrate to a supported framework such as Spring MVC 6.x, Quarkus, or Micronaut before targeting Azure-native runtimes.",
+      "severity": "mandatory",
+      "labels": [
+        "domain=cloud-readiness",
+        "domain=java-upgrade"
+      ],
+      "effort": 40
+    },
+    "javax-servlet-namespace": {
+      "title": "javax.servlet API usage \u2014 incompatible with Jakarta EE 10 and Tomcat 10+",
+      "description": "The application uses `javax.servlet` API (Servlet 4.0.1) throughout its source and the Struts 2 framework. Tomcat 10.x and later, and all Jakarta EE 10+ runtimes, have migrated the `javax.*` namespace to `jakarta.*`. Deploying this WAR to a modern runtime will fail at class-loading time. All `javax.servlet.*` imports must be renamed and the servlet-api dependency updated to `jakarta.servlet-api:6.0`.",
+      "severity": "mandatory",
+      "labels": [
+        "domain=java-upgrade"
+      ],
+      "effort": 8
+    },
+    "hardcoded-credentials-properties": {
+      "title": "Database credentials committed in source-controlled properties file",
+      "description": "The file `src/main/resources/frauddetector.properties` contains plaintext database credentials (`db.user=sa`, `db.****** This file is packaged inside the WAR artifact and committed to source control. On Azure, credentials must be injected via Azure Key Vault references, managed identities, or environment variables provided by App Service / AKS / Container Apps configuration \u2014 never bundled in the application artifact.",
+      "severity": "mandatory",
+      "labels": [
+        "domain=cloud-readiness"
+      ],
+      "effort": 5
+    },
+    "jdbc-no-connection-pool": {
+      "title": "No JDBC connection pool \u2014 connections opened via DriverManager",
+      "description": "All database access goes through `FraudConnectionFactory.openConnection()` which calls `DriverManager.getConnection()` directly on every request, creating a new TCP connection each time. There is no HikariCP, Apache DBCP2, or Tomcat JDBC Pool. On cloud-hosted databases (Azure SQL) this causes severe latency per request, exhausts server-side connection limits under load, and produces no visibility into pool health. Replace `DriverManager.getConnection()` with a HikariCP `DataSource` configured from environment variables.",
+      "severity": "mandatory",
+      "labels": [
+        "domain=cloud-readiness"
+      ],
+      "effort": 5
+    },
+    "jdbc-encryption-disabled": {
+      "title": "JDBC connection string disables TLS encryption",
+      "description": "The JDBC connection URL in `FraudConfig.getDbUrl()` hardcodes `encrypt=false;trustServerCertificate=true`, disabling TLS for all database traffic. Azure SQL Database requires encrypted connections (`encrypt=true`) by default. On Azure, connections with `encrypt=false` will be rejected unless the server is explicitly configured to allow unencrypted connections, which violates Azure security baseline and PCI-DSS requirements for financial applications.",
+      "severity": "mandatory",
+      "labels": [
+        "domain=cloud-readiness"
+      ],
+      "effort": 2
+    },
+    "hardcoded-service-url": {
+      "title": "Auth gateway URL hardcoded in properties file",
+      "description": "The URL `http://zava-auth-gateway:8080/WhoAmI.ashx` is hardcoded in `frauddetector.properties` and uses plain HTTP (not HTTPS). On Azure, service-to-service communication should use managed identities, Azure AD tokens, or at minimum HTTPS endpoints. The hardcoded hostname `zava-auth-gateway` requires that DNS name to resolve in the target environment, which is not guaranteed in App Service, AKS, or Container Apps without explicit configuration.",
+      "severity": "potential",
+      "labels": [
+        "domain=cloud-readiness"
+      ],
+      "effort": 3
+    },
+    "no-structured-logging": {
+      "title": "No structured logging framework configured",
+      "description": "The application does not declare a logging framework (SLF4J, Log4j 2, Logback) as an explicit dependency. Struts 2 brings in Commons Logging transitively. No log output is observable beyond Tomcat's stdout. Azure Monitor, Application Insights, and Log Analytics require structured logs (JSON) with correlation IDs. Introduce SLF4J + Logback or Log4j 2 with JSON appender and configure Application Insights Java agent for cloud observability.",
+      "severity": "potential",
+      "labels": [
+        "domain=cloud-readiness"
+      ],
+      "effort": 5
+    },
+    "no-health-check": {
+      "title": "Health check does not validate database connectivity",
+      "description": "The `/health` endpoint in `HealthAction` returns a static HTML response regardless of database or dependent-service state. Azure App Service liveness/readiness probes, AKS readiness probes, and Container Apps health probes rely on a health endpoint that reflects the actual readiness of the application. A static health page will cause Kubernetes to route traffic to instances that are healthy in code but cannot reach the database.",
+      "severity": "potential",
+      "labels": [
+        "domain=cloud-readiness"
+      ],
+      "effort": 3
+    },
+    "config-bundled-in-war": {
+      "title": "Configuration bundled inside WAR artifact",
+      "description": "Runtime configuration (`frauddetector.properties`) is embedded in the WAR file at packaging time. Cloud deployments require externalized configuration \u2014 environment variables (App Service Application Settings, AKS ConfigMaps/Secrets, Container Apps environment) so that the same artifact can be promoted across environments without rebuilding. The existing `FraudConfig` env-var override mechanism is a good foundation; remove the properties file defaults for sensitive values and document all required environment variables.",
+      "severity": "potential",
+      "labels": [
+        "domain=cloud-readiness"
+      ],
+      "effort": 3
+    },
+    "java-11-upgrade": {
+      "title": "Java 11 \u2014 upgrade to Java 21 LTS",
+      "description": "The project targets Java 11 (`sourceCompatibility = JavaVersion.VERSION_11`), which reached its last free Oracle public update in 2023. Azure-hosted runtimes (App Service, Container Apps, AKS) support and recommend Java 21 LTS (current LTS with long-term security support through 2031). Upgrading unlocks records, text blocks, pattern matching, virtual threads (Project Loom), and modern GC improvements. The Gradle build and Dockerfile base images must also be updated.",
+      "severity": "potential",
+      "labels": [
+        "domain=java-upgrade"
+      ],
+      "effort": 5
+    },
+    "no-rbac-authorization": {
+      "title": "No role-based access control \u2014 all authenticated users have full access",
+      "description": "Any user who successfully authenticates via `AuthTokenInterceptor` has unrestricted access to all actions including alert decisions and fraud rule deletion. There is no role check, `@PreAuthorize`-equivalent, or permission model. A cloud-ready implementation should integrate with Azure AD groups or application-level roles to restrict destructive operations (rule deletion, alert resolution) to authorized roles.",
+      "severity": "potential",
+      "labels": [
+        "domain=cloud-readiness"
+      ],
+      "effort": 8
+    },
+    "no-transaction-management": {
+      "title": "No JDBC transaction management \u2014 auto-commit per statement",
+      "description": "Every action opens a single JDBC connection and executes one or more statements relying on auto-commit. Multi-step operations (e.g., insert rule then update audit) are not wrapped in a transaction. On Azure SQL, auto-commit creates unnecessary round trips and prevents recovery from partial failures. Introduce explicit transaction boundaries using `Connection.setAutoCommit(false)` or migrate to a framework with declarative transaction management.",
+      "severity": "optional",
+      "labels": [
+        "domain=cloud-readiness"
+      ],
+      "effort": 5
+    },
+    "plaintext-session-tokens": {
+      "title": "Session tokens stored as plaintext in SQL Server",
+      "description": "The `SessionTokens` table stores authentication tokens as unencrypted strings. A read-only database compromise (e.g., SQL injection) would yield all active session tokens, enabling full account takeover. Tokens should be stored as cryptographic hashes (e.g., SHA-256) and compared by hashing the incoming token at validation time. On Azure, consider replacing the custom token table with Azure AD authentication and managed identity tokens.",
+      "severity": "optional",
+      "labels": [
+        "domain=cloud-readiness"
+      ],
+      "effort": 5
+    }
+  },
+  "projects": [
+    {
+      "properties": {
+        "repo": "mnm-ZavaFraudDetector",
+        "appName": "ZavaFraudDetector",
+        "languages": [
+          "Java"
+        ],
+        "frameworks": [
+          "Apache Struts 2.5.30"
+        ],
+        "tools": [
+          "Gradle 7.6"
+        ],
+        "jdkVersion": "11"
+      },
+      "incidents": [
+        {
+          "ruleId": "struts2-eol-framework",
+          "location": "build.gradle",
+          "line": 13,
+          "targets": {
+            "azure-appservice": {
+              "effort": 40
+            },
+            "azure-aks": {
+              "effort": 40
+            },
+            "azure-container-apps": {
+              "effort": 40
+            }
+          }
+        },
+        {
+          "ruleId": "struts2-eol-framework",
+          "location": "src/main/resources/struts.xml",
+          "line": 1,
+          "targets": {
+            "azure-appservice": {
+              "effort": 40
+            },
+            "azure-aks": {
+              "effort": 40
+            },
+            "azure-container-apps": {
+              "effort": 40
+            }
+          }
+        },
+        {
+          "ruleId": "javax-servlet-namespace",
+          "location": "src/main/java/com/zavabank/frauddetector/AuthTokenInterceptor.java",
+          "line": 7,
+          "targets": {
+            "azure-appservice": {
+              "effort": 8
+            },
+            "azure-aks": {
+              "effort": 8
+            },
+            "azure-container-apps": {
+              "effort": 8
+            }
+          }
+        },
+        {
+          "ruleId": "javax-servlet-namespace",
+          "location": "src/main/java/com/zavabank/frauddetector/SsoSessionService.java",
+          "line": 11,
+          "targets": {
+            "azure-appservice": {
+              "effort": 8
+            },
+            "azure-aks": {
+              "effort": 8
+            },
+            "azure-container-apps": {
+              "effort": 8
+            }
+          }
+        },
+        {
+          "ruleId": "javax-servlet-namespace",
+          "location": "src/main/java/com/zavabank/frauddetector/LoginAction.java",
+          "line": 5,
+          "targets": {
+            "azure-appservice": {
+              "effort": 8
+            },
+            "azure-aks": {
+              "effort": 8
+            },
+            "azure-container-apps": {
+              "effort": 8
+            }
+          }
+        },
+        {
+          "ruleId": "hardcoded-credentials-properties",
+          "location": "src/main/resources/frauddetector.properties",
+          "line": 4,
+          "targets": {
+            "azure-appservice": {
+              "effort": 5
+            },
+            "azure-aks": {
+              "effort": 5
+            },
+            "azure-container-apps": {
+              "effort": 5
+            }
+          }
+        },
+        {
+          "ruleId": "jdbc-no-connection-pool",
+          "location": "src/main/java/com/zavabank/frauddetector/FraudConnectionFactory.java",
+          "line": 19,
+          "targets": {
+            "azure-appservice": {
+              "effort": 5
+            },
+            "azure-aks": {
+              "effort": 5
+            },
+            "azure-container-apps": {
+              "effort": 5
+            }
+          }
+        },
+        {
+          "ruleId": "jdbc-encryption-disabled",
+          "location": "src/main/java/com/zavabank/frauddetector/FraudConfig.java",
+          "line": 28,
+          "targets": {
+            "azure-appservice": {
+              "effort": 2
+            },
+            "azure-aks": {
+              "effort": 2
+            },
+            "azure-container-apps": {
+              "effort": 2
+            }
+          }
+        },
+        {
+          "ruleId": "hardcoded-service-url",
+          "location": "src/main/resources/frauddetector.properties",
+          "line": 7,
+          "targets": {
+            "azure-appservice": {
+              "effort": 3
+            },
+            "azure-aks": {
+              "effort": 3
+            },
+            "azure-container-apps": {
+              "effort": 3
+            }
+          }
+        },
+        {
+          "ruleId": "no-structured-logging",
+          "location": "build.gradle",
+          "line": 1,
+          "targets": {
+            "azure-appservice": {
+              "effort": 5
+            },
+            "azure-aks": {
+              "effort": 5
+            },
+            "azure-container-apps": {
+              "effort": 5
+            }
+          }
+        },
+        {
+          "ruleId": "no-health-check",
+          "location": "src/main/java/com/zavabank/frauddetector/HealthAction.java",
+          "line": 7,
+          "targets": {
+            "azure-appservice": {
+              "effort": 3
+            },
+            "azure-aks": {
+              "effort": 3
+            },
+            "azure-container-apps": {
+              "effort": 3
+            }
+          }
+        },
+        {
+          "ruleId": "config-bundled-in-war",
+          "location": "src/main/resources/frauddetector.properties",
+          "line": 1,
+          "targets": {
+            "azure-appservice": {
+              "effort": 3
+            },
+            "azure-aks": {
+              "effort": 3
+            },
+            "azure-container-apps": {
+              "effort": 3
+            }
+          }
+        },
+        {
+          "ruleId": "java-11-upgrade",
+          "location": "build.gradle",
+          "line": 8,
+          "targets": {
+            "azure-appservice": {
+              "effort": 5
+            },
+            "azure-aks": {
+              "effort": 5
+            },
+            "azure-container-apps": {
+              "effort": 5
+            }
+          }
+        },
+        {
+          "ruleId": "no-rbac-authorization",
+          "location": "src/main/java/com/zavabank/frauddetector/AuthTokenInterceptor.java",
+          "line": 21,
+          "targets": {
+            "azure-appservice": {
+              "effort": 8
+            },
+            "azure-aks": {
+              "effort": 8
+            },
+            "azure-container-apps": {
+              "effort": 8
+            }
+          }
+        },
+        {
+          "ruleId": "no-transaction-management",
+          "location": "src/main/java/com/zavabank/frauddetector/RuleEditAction.java",
+          "line": 70,
+          "targets": {
+            "azure-appservice": {
+              "effort": 5
+            },
+            "azure-aks": {
+              "effort": 5
+            },
+            "azure-container-apps": {
+              "effort": 5
+            }
+          }
+        },
+        {
+          "ruleId": "plaintext-session-tokens",
+          "location": "src/main/java/com/zavabank/frauddetector/SsoSessionService.java",
+          "line": 26,
+          "targets": {
+            "azure-appservice": {
+              "effort": 5
+            },
+            "azure-aks": {
+              "effort": 5
+            },
+            "azure-container-apps": {
+              "effort": 5
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "security": [
+    {
+      "id": "CVE-2024-53677",
+      "title": "Apache Struts file upload logic is flawed",
+      "category": "CVE",
+      "severity": "mandatory",
+      "description": "[CVE-2024-53677](https://github.com/advisories/GHSA-43mq-6xmg-29vm): Apache Struts file upload logic is flawed\n\nSeverity: CRITICAL\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: < 6.4.0\n\nRecommended fix:\n  - Upgrade org.apache.struts:struts2-core to 6.4.0 or later (note: 2.5.x branch is EOL; a full framework migration is required)",
+      "evidence": {
+        "files": [
+          "build.gradle:13"
+        ],
+        "explanation": "[CVE-2024-53677](https://github.com/advisories/GHSA-43mq-6xmg-29vm): Apache Struts file upload logic is flawed\n\nSeverity: CRITICAL\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: < 6.4.0\n\nRecommended fix:\n  - Upgrade org.apache.struts:struts2-core to 6.4.0 or later (note: 2.5.x branch is EOL; a full framework migration is required)"
+      },
+      "storyPoint": 1
+    },
+    {
+      "id": "CVE-2023-50164",
+      "title": "Apache Struts vulnerable to path traversal",
+      "category": "CVE",
+      "severity": "mandatory",
+      "description": "[CVE-2023-50164](https://github.com/advisories/GHSA-2j39-qcjm-428w): Apache Struts vulnerable to path traversal\n\nSeverity: CRITICAL\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: >= 2.0.0, < 2.5.33\n\nRecommended fix:\n  - Upgrade org.apache.struts:struts2-core to 2.5.33 or later (note: 2.5.x branch is EOL; a full framework migration is recommended)",
+      "evidence": {
+        "files": [
+          "build.gradle:13"
+        ],
+        "explanation": "[CVE-2023-50164](https://github.com/advisories/GHSA-2j39-qcjm-428w): Apache Struts vulnerable to path traversal\n\nSeverity: CRITICAL\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: >= 2.0.0, < 2.5.33\n\nRecommended fix:\n  - Upgrade org.apache.struts:struts2-core to 2.5.33 or later (note: 2.5.x branch is EOL; a full framework migration is recommended)"
+      },
+      "storyPoint": 1
+    },
+    {
+      "id": "CVE-2025-68493",
+      "title": "Apache Struts 2 is Missing XML Validation",
+      "category": "CVE",
+      "severity": "mandatory",
+      "description": "[CVE-2025-68493](https://github.com/advisories/GHSA-qcfc-hmrc-59x7): Apache Struts 2 is Missing XML Validation\n\nSeverity: HIGH\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: >= 2.5.0, <= 2.5.33 (no fix available for the 2.5.x branch)\n\nRecommended fix:\n  - Migrate to org.apache.struts:struts2-core 6.1.1 or later (requires full framework upgrade from EOL 2.5.x)",
+      "evidence": {
+        "files": [
+          "build.gradle:13"
+        ],
+        "explanation": "[CVE-2025-68493](https://github.com/advisories/GHSA-qcfc-hmrc-59x7): Apache Struts 2 is Missing XML Validation\n\nSeverity: HIGH\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: >= 2.5.0, <= 2.5.33 (no fix available for the 2.5.x branch)\n\nRecommended fix:\n  - Migrate to org.apache.struts:struts2-core 6.1.1 or later (requires full framework upgrade from EOL 2.5.x)"
+      },
+      "storyPoint": 1
+    },
+    {
+      "id": "CVE-2025-66675",
+      "title": "Apache Struts has a Denial of Service vulnerability",
+      "category": "CVE",
+      "severity": "mandatory",
+      "description": "[CVE-2025-66675](https://github.com/advisories/GHSA-rg58-xhh7-mqjw): Apache Struts has a Denial of Service vulnerability\n\nSeverity: HIGH\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: >= 2.0.0, < 6.8.0\n\nRecommended fix:\n  - Upgrade org.apache.struts:struts2-core to 6.8.0 or later",
+      "evidence": {
+        "files": [
+          "build.gradle:13"
+        ],
+        "explanation": "[CVE-2025-66675](https://github.com/advisories/GHSA-rg58-xhh7-mqjw): Apache Struts has a Denial of Service vulnerability\n\nSeverity: HIGH\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: >= 2.0.0, < 6.8.0\n\nRecommended fix:\n  - Upgrade org.apache.struts:struts2-core to 6.8.0 or later"
+      },
+      "storyPoint": 1
+    },
+    {
+      "id": "CVE-2025-64775",
+      "title": "Apache Struts is Vulnerable to DoS via File Leak",
+      "category": "CVE",
+      "severity": "mandatory",
+      "description": "[CVE-2025-64775](https://github.com/advisories/GHSA-xx7v-hqxh-cjr9): Apache Struts is Vulnerable to DoS via File Leak\n\nSeverity: HIGH\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: >= 2.5.0, <= 2.5.33 (no fix available for the 2.5.x branch)\n\nRecommended fix:\n  - Migrate to org.apache.struts:struts2-core 6.8.0 or later (requires full framework upgrade)",
+      "evidence": {
+        "files": [
+          "build.gradle:13"
+        ],
+        "explanation": "[CVE-2025-64775](https://github.com/advisories/GHSA-xx7v-hqxh-cjr9): Apache Struts is Vulnerable to DoS via File Leak\n\nSeverity: HIGH\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: >= 2.5.0, <= 2.5.33 (no fix available for the 2.5.x branch)\n\nRecommended fix:\n  - Migrate to org.apache.struts:struts2-core 6.8.0 or later (requires full framework upgrade)"
+      },
+      "storyPoint": 1
+    },
+    {
+      "id": "CVE-2023-41835",
+      "title": "Apache Struts Improper Control of Dynamically-Managed Code Resources vulnerability",
+      "category": "CVE",
+      "severity": "mandatory",
+      "description": "[CVE-2023-41835](https://github.com/advisories/GHSA-729q-fcgp-r5xh): Apache Struts Improper Control of Dynamically-Managed Code Resources vulnerability\n\nSeverity: HIGH\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: < 2.5.32\n\nRecommended fix:\n  - Upgrade org.apache.struts:struts2-core to 2.5.32 or later (note: 2.5.x branch is EOL)",
+      "evidence": {
+        "files": [
+          "build.gradle:13"
+        ],
+        "explanation": "[CVE-2023-41835](https://github.com/advisories/GHSA-729q-fcgp-r5xh): Apache Struts Improper Control of Dynamically-Managed Code Resources vulnerability\n\nSeverity: HIGH\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: < 2.5.32\n\nRecommended fix:\n  - Upgrade org.apache.struts:struts2-core to 2.5.32 or later (note: 2.5.x branch is EOL)"
+      },
+      "storyPoint": 1
+    },
+    {
+      "id": "CVE-2023-34396",
+      "title": "Apache Struts vulnerable to memory exhaustion",
+      "category": "CVE",
+      "severity": "mandatory",
+      "description": "[CVE-2023-34396](https://github.com/advisories/GHSA-4g42-gqrg-4633): Apache Struts vulnerable to memory exhaustion\n\nSeverity: HIGH\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: < 2.5.31\n\nRecommended fix:\n  - Upgrade org.apache.struts:struts2-core to 2.5.31 or later (note: 2.5.x branch is EOL)",
+      "evidence": {
+        "files": [
+          "build.gradle:13"
+        ],
+        "explanation": "[CVE-2023-34396](https://github.com/advisories/GHSA-4g42-gqrg-4633): Apache Struts vulnerable to memory exhaustion\n\nSeverity: HIGH\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: < 2.5.31\n\nRecommended fix:\n  - Upgrade org.apache.struts:struts2-core to 2.5.31 or later (note: 2.5.x branch is EOL)"
+      },
+      "storyPoint": 1
+    },
+    {
+      "id": "CWE-477",
+      "title": "Use of Obsolete Function",
+      "category": "Code Quality",
+      "severity": "optional",
+      "description": "The code uses deprecated or obsolete functions, which suggests that the code has not been actively reviewed or maintained.",
+      "evidence": {
+        "files": [
+          "src/main/java/com/zavabank/frauddetector/FraudConnectionFactory.java"
+        ],
+        "explanation": "FraudConnectionFactory uses Class.forName(\"com.microsoft.sqlserver.jdbc.SQLServerDriver\") in a static initializer to manually register the JDBC driver. Since JDBC 4.0 (Java 6+), the Service Provider mechanism automatically discovers and loads JDBC drivers from the classpath without requiring explicit Class.forName() calls. This pattern is obsolete for Java 11 applications."
+      },
+      "storyPoint": 1
+    },
+    {
+      "id": "CWE-772",
+      "title": "Missing Release of Resource after Effective Lifetime",
+      "category": "Code Quality",
+      "severity": "potential",
+      "description": "The product does not release a resource after its effective lifetime has ended, i.e., after the resource is no longer needed.",
+      "evidence": {
+        "files": [
+          "src/main/java/com/zavabank/frauddetector/SsoSessionService.java"
+        ],
+        "explanation": "In SsoSessionService.resolveTokenFromAuthGateway(), an HttpURLConnection is opened but conn.disconnect() is never called. When the HTTP status is not 200, the method returns early without disconnecting. Even in the success path, the connection is not explicitly disconnected after the response body is read. Because HttpURLConnection is not AutoCloseable, it cannot be managed by try-with-resources, and the underlying TCP connection is never released."
+      },
+      "storyPoint": 3
+    },
+    {
+      "id": "CWE-775",
+      "title": "Missing Release of File Descriptor or Handle after Effective Lifetime",
+      "category": "Code Quality",
+      "severity": "potential",
+      "description": "The product does not release a file descriptor or handle after its effective lifetime has ended, i.e., after the file descriptor/handle is no longer needed.",
+      "evidence": {
+        "files": [
+          "src/main/java/com/zavabank/frauddetector/SsoSessionService.java"
+        ],
+        "explanation": "In SsoSessionService.resolveTokenFromAuthGateway(), the HttpURLConnection holds an underlying socket (file descriptor). conn.disconnect() is never called in any code path \u2014 neither when status != 200 (early return) nor after successfully reading the response body. This results in the socket file descriptor not being released until garbage collection."
+      },
+      "storyPoint": 3
+    },
+    {
+      "id": "CWE-259",
+      "title": "Use of Hard-coded Password",
+      "category": "Credentials & Secrets",
+      "severity": "optional",
+      "description": "The product contains a hard-coded password, which it uses for its own inbound authentication or for outbound communication to external components.",
+      "evidence": {
+        "files": [
+          "src/main/resources/frauddetector.properties"
+        ],
+        "explanation": "frauddetector.properties (committed to source control and bundled into the deployable WAR under WEB-INF/classes/) contains db.****** in plain text. FraudConfig.getDbPassword() reads this property as a fallback when the DB_PASSWORD environment variable is not set, meaning the hard-coded password is always present in the classpath and the deployed artifact."
+      },
+      "storyPoint": 5
+    },
+    {
+      "id": "CWE-732",
+      "title": "Incorrect Permission Assignment for Critical Resource",
+      "category": "Credentials & Secrets",
+      "severity": "optional",
+      "description": "The product specifies permissions for a security-critical resource in a way that allows that resource to be read or modified by unintended actors.",
+      "evidence": {
+        "files": [
+          "src/main/resources/frauddetector.properties",
+          "Dockerfile"
+        ],
+        "explanation": "frauddetector.properties containing database credentials (db.user=sa, db.****** is bundled inside the WAR as WEB-INF/classes/frauddetector.properties with no file permission restrictions. The Dockerfile is based on tomcat:9.0-jdk11 and contains no USER directive, so the container runs as root and all files inherit world-readable permissions. Any process in the container can read the credentials file."
+      },
+      "storyPoint": 5
+    },
+    {
+      "id": "CWE-778",
+      "title": "Insufficient Logging",
+      "category": "Credentials & Secrets",
+      "severity": "potential",
+      "description": "When a security-critical event occurs, the product either does not record the event or omits important details about the event when logging it.",
+      "evidence": {
+        "files": [
+          "src/main/java/com/zavabank/frauddetector/SsoSessionService.java",
+          "src/main/java/com/zavabank/frauddetector/AuthTokenInterceptor.java",
+          "src/main/java/com/zavabank/frauddetector/FraudConfig.java"
+        ],
+        "explanation": "The application contains no logging framework (no SLF4J, Log4j, java.util.logging, or System.out calls). Security-critical events are silently swallowed: (1) SsoSessionService.resolveSessionUser() catches SQLException with 'catch (SQLException ignored)' \u2014 authentication failures are never recorded; (2) SsoSessionService.resolveTokenFromAuthGateway() uses 'catch (Exception ignored)' \u2014 auth gateway errors are not logged; (3) FraudConfig static initializer uses 'catch (IOException ignored)' \u2014 configuration load failures are not logged; (4) all Action classes catch SQL exceptions without logging. An attacker probing for vulnerabilities or a misconfiguration causing auth bypass would leave no trace."
+      },
+      "storyPoint": 3
+    },
+    {
+      "id": "CWE-798",
+      "title": "Use of Hard-coded Credentials",
+      "category": "Credentials & Secrets",
+      "severity": "optional",
+      "description": "The product contains hard-coded credentials, such as a password or cryptographic key.",
+      "evidence": {
+        "files": [
+          "src/main/resources/frauddetector.properties"
+        ],
+        "explanation": "frauddetector.properties committed to source control contains hard-coded database credentials: db.user=sa (the SQL Server system administrator account) and db.****** These credentials are bundled into the WAR artifact at build time and are always available at runtime as fallback values in FraudConfig.getDbUser() and FraudConfig.getDbPassword(), regardless of whether environment variables are set."
+      },
+      "storyPoint": 5
+    },
+    {
+      "id": "CWE-567",
+      "title": "Unsynchronized Access to Shared Data in a Multithreaded Context",
+      "category": "Concurrency & Synchronization",
+      "severity": "potential",
+      "description": "The product does not properly synchronize shared data, such as static variables across threads, which can lead to undefined behavior and unpredictable data changes.",
+      "evidence": {
+        "files": [
+          "src/main/java/com/zavabank/frauddetector/FlaggedQueueAction.java",
+          "src/main/java/com/zavabank/frauddetector/TransactionDetailAction.java"
+        ],
+        "explanation": "FlaggedQueueAction declares two static final fields: DecimalFormat MONEY_FORMAT and SimpleDateFormat DATE_FORMAT (lines 13-14). TransactionDetailAction declares a static final SimpleDateFormat DATE_FORMAT (line 9). Both SimpleDateFormat and DecimalFormat are not thread-safe \u2014 they hold internal mutable calendar/number-parsing state. These static instances are shared across all concurrent Tomcat request-handling threads without synchronization. Each request thread calls DATE_FORMAT.format() and MONEY_FORMAT.format() on the same instances concurrently, which can corrupt formatting results or throw unexpected exceptions under load."
+      },
+      "storyPoint": 5
+    },
+    {
+      "id": "CWE-820",
+      "title": "Missing Synchronization",
+      "category": "Concurrency & Synchronization",
+      "severity": "potential",
+      "description": "The product utilizes a shared resource in a concurrent manner but does not attempt to synchronize access to the resource.",
+      "evidence": {
+        "files": [
+          "src/main/java/com/zavabank/frauddetector/FlaggedQueueAction.java",
+          "src/main/java/com/zavabank/frauddetector/TransactionDetailAction.java"
+        ],
+        "explanation": "FlaggedQueueAction.MONEY_FORMAT (DecimalFormat) and FlaggedQueueAction.DATE_FORMAT / TransactionDetailAction.DATE_FORMAT (SimpleDateFormat) are static fields shared across all concurrent request threads. No synchronization, lock, or ThreadLocal is used when calling format() on these instances. Tomcat processes multiple concurrent HTTP requests, each invoking the execute() method in a separate thread, all accessing the same mutable formatter instances without any attempt to synchronize access."
+      },
+      "storyPoint": 8
+    }
+  ],
+  "rearchitect": [
+    {
+      "old": "Apache Struts 2",
+      "explanation": "Apache Struts 2 is an End-of-Life MVC framework last maintained in the 2.5.x branch (EOL December 2023). It relies on javax.* Servlet API namespaces that are incompatible with Tomcat 10+ and Jakarta EE 10+. The framework has a long history of critical CVEs including remote code execution. Migration to Spring MVC 6.x (Spring Boot 3.x), Quarkus, or Micronaut is recommended to enable Jakarta EE 10 compatibility, modern dependency injection, and cloud-native observability.",
+      "detectedIn": {
+        "configFiles": [
+          "src/main/resources/struts.xml",
+          "src/main/webapp/WEB-INF/web.xml"
+        ],
+        "sourceFiles": [
+          "src/main/java/com/zavabank/frauddetector/AuthTokenInterceptor.java",
+          "src/main/java/com/zavabank/frauddetector/LoginAction.java",
+          "src/main/java/com/zavabank/frauddetector/FlaggedQueueAction.java",
+          "src/main/java/com/zavabank/frauddetector/TransactionDetailAction.java",
+          "src/main/java/com/zavabank/frauddetector/AlertDecisionAction.java",
+          "src/main/java/com/zavabank/frauddetector/RuleListAction.java",
+          "src/main/java/com/zavabank/frauddetector/RuleEditAction.java",
+          "src/main/java/com/zavabank/frauddetector/RuleDeleteAction.java",
+          "src/main/java/com/zavabank/frauddetector/HealthAction.java"
+        ]
+      }
+    }
+  ]
+}
