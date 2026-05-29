@@ -1,0 +1,117 @@
+{
+  "metadata": {
+    "id": "20260529040559",
+    "analysisStartTime": "2026-05-29T04:05:59.0000000Z",
+    "analysisEndTime": "2026-05-29T04:06:45.0000000Z",
+    "assessmentTool": "AppCAT",
+    "assessmentToolVersion": "generated"
+  },
+  "rules": {
+    "JAVA-HTTP-001": {
+      "title": "HTTP-only external identity gateway",
+      "severity": "mandatory",
+      "effort": 5,
+      "labels": [
+        "domain=cloud-readiness"
+      ]
+    },
+    "JAVA-DB-001": {
+      "title": "Hard-coded database credentials in properties file",
+      "severity": "mandatory",
+      "effort": 3,
+      "labels": [
+        "domain=cloud-readiness"
+      ]
+    },
+    "JAVA-FRAMEWORK-001": {
+      "title": "Legacy Struts-based web tier",
+      "severity": "potential",
+      "effort": 8,
+      "labels": [
+        "domain=java-upgrade"
+      ]
+    }
+  },
+  "projects": [
+    {
+      "properties": {
+        "repo": "mnm-ZavaFraudDetector",
+        "languages": [
+          "Java"
+        ],
+        "frameworks": [
+          "Struts 2.5"
+        ],
+        "tools": [
+          "Gradle",
+          "Tomcat 9"
+        ],
+        "appType": "Web Application"
+      },
+      "incidents": [
+        {
+          "ruleId": "JAVA-HTTP-001",
+          "location": "src/main/resources/frauddetector.properties",
+          "line": 7
+        },
+        {
+          "ruleId": "JAVA-DB-001",
+          "location": "src/main/resources/frauddetector.properties",
+          "line": 5
+        },
+        {
+          "ruleId": "JAVA-FRAMEWORK-001",
+          "location": "src/main/resources/struts.xml",
+          "line": 8
+        }
+      ]
+    }
+  ],
+  "security": [
+    {
+      "id": "CWE-778",
+      "title": "Insufficient Logging",
+      "category": "Code Quality",
+      "severity": "potential",
+      "description": "When a security-critical event occurs, the product either does not record the event or omits important details about the event when logging it.",
+      "evidence": {
+        "files": [
+          "src/main/java/com/zavabank/frauddetector/SsoSessionService.java:38",
+          "src/main/java/com/zavabank/frauddetector/SsoSessionService.java:112"
+        ],
+        "explanation": "SQLException and generic exceptions are caught and ignored without security logging in session resolution paths."
+      },
+      "storyPoint": 3
+    },
+    {
+      "id": "CWE-259",
+      "title": "Use of Hard-coded Password",
+      "category": "Credentials & Secrets",
+      "severity": "optional",
+      "description": "The product contains a hard-coded password, which it uses for its own inbound authentication or for outbound communication to external components.",
+      "evidence": {
+        "files": [
+          "src/main/resources/frauddetector.properties:5"
+        ],
+        "explanation": "A static database password value is committed in frauddetector.properties."
+      },
+      "storyPoint": 5
+    },
+    {
+      "id": "CWE-798",
+      "title": "Use of Hard-coded Credentials",
+      "category": "Credentials & Secrets",
+      "severity": "optional",
+      "description": "The product contains hard-coded credentials, such as a password or cryptographic key.",
+      "evidence": {
+        "files": [
+          "src/main/resources/frauddetector.properties:4",
+          "src/main/resources/frauddetector.properties:5"
+        ],
+        "explanation": "Hard-coded database username and password are present in the repository configuration."
+      },
+      "storyPoint": 5
+    }
+  ],
+  "rearchitect": []
+}
