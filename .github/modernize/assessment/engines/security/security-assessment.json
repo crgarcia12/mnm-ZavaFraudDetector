@@ -1,0 +1,182 @@
+{
+  "GeneratedAt": "2026-05-29T07:53:17.0000000Z",
+  "ProjectPath": ".",
+  "Summary": {
+    "TotalFindings": 16,
+    "CveCount": 7,
+    "CweCount": 9,
+    "BySeverity": { "mandatory": 7, "optional": 4, "potential": 5 },
+    "ByCategory": {
+      "CVE": 7,
+      "Code Quality": 3,
+      "Credentials & Secrets": 4,
+      "Concurrency & Synchronization": 2
+    },
+    "TotalRulesAssessed": 59,
+    "RulesPassed": 50
+  },
+  "CveFindings": [
+    {
+      "Id": "CVE-2024-53677",
+      "Name": "Apache Struts file upload logic is flawed",
+      "Category": "CVE",
+      "Severity": "mandatory",
+      "StoryPoint": 1,
+      "Description": "[CVE-2024-53677](https://github.com/advisories/GHSA-43mq-6xmg-29vm): Apache Struts file upload logic is flawed\n\nSeverity: CRITICAL\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: < 6.4.0\n\nRecommended fix:\n  - Upgrade org.apache.struts:struts2-core to 6.4.0 or later (note: 2.5.x branch is EOL; a full framework migration is required)",
+      "Files": ["build.gradle:13"],
+      "Explanation": "[CVE-2024-53677](https://github.com/advisories/GHSA-43mq-6xmg-29vm): Apache Struts file upload logic is flawed\n\nSeverity: CRITICAL\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: < 6.4.0\n\nRecommended fix:\n  - Upgrade org.apache.struts:struts2-core to 6.4.0 or later (note: 2.5.x branch is EOL; a full framework migration is required)"
+    },
+    {
+      "Id": "CVE-2023-50164",
+      "Name": "Apache Struts vulnerable to path traversal",
+      "Category": "CVE",
+      "Severity": "mandatory",
+      "StoryPoint": 1,
+      "Description": "[CVE-2023-50164](https://github.com/advisories/GHSA-2j39-qcjm-428w): Apache Struts vulnerable to path traversal\n\nSeverity: CRITICAL\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: >= 2.0.0, < 2.5.33\n\nRecommended fix:\n  - Upgrade org.apache.struts:struts2-core to 2.5.33 or later (note: 2.5.x branch is EOL; a full framework migration is recommended)",
+      "Files": ["build.gradle:13"],
+      "Explanation": "[CVE-2023-50164](https://github.com/advisories/GHSA-2j39-qcjm-428w): Apache Struts vulnerable to path traversal\n\nSeverity: CRITICAL\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: >= 2.0.0, < 2.5.33\n\nRecommended fix:\n  - Upgrade org.apache.struts:struts2-core to 2.5.33 or later (note: 2.5.x branch is EOL; a full framework migration is recommended)"
+    },
+    {
+      "Id": "CVE-2025-68493",
+      "Name": "Apache Struts 2 is Missing XML Validation",
+      "Category": "CVE",
+      "Severity": "mandatory",
+      "StoryPoint": 1,
+      "Description": "[CVE-2025-68493](https://github.com/advisories/GHSA-qcfc-hmrc-59x7): Apache Struts 2 is Missing XML Validation\n\nSeverity: HIGH\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: >= 2.5.0, <= 2.5.33 (no fix available for the 2.5.x branch)\n\nRecommended fix:\n  - Migrate to org.apache.struts:struts2-core 6.1.1 or later (requires full framework upgrade from EOL 2.5.x)",
+      "Files": ["build.gradle:13"],
+      "Explanation": "[CVE-2025-68493](https://github.com/advisories/GHSA-qcfc-hmrc-59x7): Apache Struts 2 is Missing XML Validation\n\nSeverity: HIGH\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: >= 2.5.0, <= 2.5.33 (no fix available for the 2.5.x branch)\n\nRecommended fix:\n  - Migrate to org.apache.struts:struts2-core 6.1.1 or later (requires full framework upgrade from EOL 2.5.x)"
+    },
+    {
+      "Id": "CVE-2025-66675",
+      "Name": "Apache Struts has a Denial of Service vulnerability",
+      "Category": "CVE",
+      "Severity": "mandatory",
+      "StoryPoint": 1,
+      "Description": "[CVE-2025-66675](https://github.com/advisories/GHSA-rg58-xhh7-mqjw): Apache Struts has a Denial of Service vulnerability\n\nSeverity: HIGH\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: >= 2.0.0, < 6.8.0\n\nRecommended fix:\n  - Upgrade org.apache.struts:struts2-core to 6.8.0 or later",
+      "Files": ["build.gradle:13"],
+      "Explanation": "[CVE-2025-66675](https://github.com/advisories/GHSA-rg58-xhh7-mqjw): Apache Struts has a Denial of Service vulnerability\n\nSeverity: HIGH\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: >= 2.0.0, < 6.8.0\n\nRecommended fix:\n  - Upgrade org.apache.struts:struts2-core to 6.8.0 or later"
+    },
+    {
+      "Id": "CVE-2025-64775",
+      "Name": "Apache Struts is Vulnerable to DoS via File Leak",
+      "Category": "CVE",
+      "Severity": "mandatory",
+      "StoryPoint": 1,
+      "Description": "[CVE-2025-64775](https://github.com/advisories/GHSA-xx7v-hqxh-cjr9): Apache Struts is Vulnerable to DoS via File Leak\n\nSeverity: HIGH\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: >= 2.5.0, <= 2.5.33 (no fix available for the 2.5.x branch)\n\nRecommended fix:\n  - Migrate to org.apache.struts:struts2-core 6.8.0 or later (requires full framework upgrade)",
+      "Files": ["build.gradle:13"],
+      "Explanation": "[CVE-2025-64775](https://github.com/advisories/GHSA-xx7v-hqxh-cjr9): Apache Struts is Vulnerable to DoS via File Leak\n\nSeverity: HIGH\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: >= 2.5.0, <= 2.5.33 (no fix available for the 2.5.x branch)\n\nRecommended fix:\n  - Migrate to org.apache.struts:struts2-core 6.8.0 or later (requires full framework upgrade)"
+    },
+    {
+      "Id": "CVE-2023-41835",
+      "Name": "Apache Struts Improper Control of Dynamically-Managed Code Resources vulnerability",
+      "Category": "CVE",
+      "Severity": "mandatory",
+      "StoryPoint": 1,
+      "Description": "[CVE-2023-41835](https://github.com/advisories/GHSA-729q-fcgp-r5xh): Apache Struts Improper Control of Dynamically-Managed Code Resources vulnerability\n\nSeverity: HIGH\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: < 2.5.32\n\nRecommended fix:\n  - Upgrade org.apache.struts:struts2-core to 2.5.32 or later (note: 2.5.x branch is EOL)",
+      "Files": ["build.gradle:13"],
+      "Explanation": "[CVE-2023-41835](https://github.com/advisories/GHSA-729q-fcgp-r5xh): Apache Struts Improper Control of Dynamically-Managed Code Resources vulnerability\n\nSeverity: HIGH\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: < 2.5.32\n\nRecommended fix:\n  - Upgrade org.apache.struts:struts2-core to 2.5.32 or later (note: 2.5.x branch is EOL)"
+    },
+    {
+      "Id": "CVE-2023-34396",
+      "Name": "Apache Struts vulnerable to memory exhaustion",
+      "Category": "CVE",
+      "Severity": "mandatory",
+      "StoryPoint": 1,
+      "Description": "[CVE-2023-34396](https://github.com/advisories/GHSA-4g42-gqrg-4633): Apache Struts vulnerable to memory exhaustion\n\nSeverity: HIGH\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: < 2.5.31\n\nRecommended fix:\n  - Upgrade org.apache.struts:struts2-core to 2.5.31 or later (note: 2.5.x branch is EOL)",
+      "Files": ["build.gradle:13"],
+      "Explanation": "[CVE-2023-34396](https://github.com/advisories/GHSA-4g42-gqrg-4633): Apache Struts vulnerable to memory exhaustion\n\nSeverity: HIGH\n\nAffected dependencies:\n  - org.apache.struts:struts2-core:2.5.30 (declared at build.gradle:13)\n\nVulnerable range: < 2.5.31\n\nRecommended fix:\n  - Upgrade org.apache.struts:struts2-core to 2.5.31 or later (note: 2.5.x branch is EOL)"
+    }
+  ],
+  "CweFindings": [
+    {
+      "Id": "CWE-477",
+      "Name": "Use of Obsolete Function",
+      "Category": "Code Quality",
+      "Severity": "optional",
+      "StoryPoint": 1,
+      "Description": "The code uses deprecated or obsolete functions, which suggests that the code has not been actively reviewed or maintained.",
+      "Files": ["src/main/java/com/zavabank/frauddetector/FraudConnectionFactory.java"],
+      "Explanation": "FraudConnectionFactory uses Class.forName(\"com.microsoft.sqlserver.jdbc.SQLServerDriver\") in a static initializer to manually register the JDBC driver. Since JDBC 4.0 (Java 6+), the Service Provider mechanism automatically discovers and loads JDBC drivers from the classpath without requiring explicit Class.forName() calls. This pattern is obsolete for Java 11 applications."
+    },
+    {
+      "Id": "CWE-772",
+      "Name": "Missing Release of Resource after Effective Lifetime",
+      "Category": "Code Quality",
+      "Severity": "potential",
+      "StoryPoint": 3,
+      "Description": "The product does not release a resource after its effective lifetime has ended, i.e., after the resource is no longer needed.",
+      "Files": ["src/main/java/com/zavabank/frauddetector/SsoSessionService.java"],
+      "Explanation": "In SsoSessionService.resolveTokenFromAuthGateway(), an HttpURLConnection is opened but conn.disconnect() is never called. When the HTTP status is not 200, the method returns early without disconnecting. Even in the success path, the connection is not explicitly disconnected after the response body is read. Because HttpURLConnection is not AutoCloseable, it cannot be managed by try-with-resources, and the underlying TCP connection is never released."
+    },
+    {
+      "Id": "CWE-775",
+      "Name": "Missing Release of File Descriptor or Handle after Effective Lifetime",
+      "Category": "Code Quality",
+      "Severity": "potential",
+      "StoryPoint": 3,
+      "Description": "The product does not release a file descriptor or handle after its effective lifetime has ended, i.e., after the file descriptor/handle is no longer needed.",
+      "Files": ["src/main/java/com/zavabank/frauddetector/SsoSessionService.java"],
+      "Explanation": "In SsoSessionService.resolveTokenFromAuthGateway(), the HttpURLConnection holds an underlying socket (file descriptor). conn.disconnect() is never called in any code path — neither when status != 200 (early return) nor after successfully reading the response body. This results in the socket file descriptor not being released until garbage collection."
+    },
+    {
+      "Id": "CWE-259",
+      "Name": "Use of Hard-coded Password",
+      "Category": "Credentials & Secrets",
+      "Severity": "optional",
+      "StoryPoint": 5,
+      "Description": "The product contains a hard-coded password, which it uses for its own inbound authentication or for outbound communication to external components.",
+      "Files": ["src/main/resources/frauddetector.properties"],
+      "Explanation": "frauddetector.properties (committed to source control and bundled into the deployable WAR under WEB-INF/classes/) contains db.****** in plain text. FraudConfig.getDbPassword() reads this property as a fallback when the DB_PASSWORD environment variable is not set, meaning the hard-coded password is always present in the classpath and the deployed artifact."
+    },
+    {
+      "Id": "CWE-732",
+      "Name": "Incorrect Permission Assignment for Critical Resource",
+      "Category": "Credentials & Secrets",
+      "Severity": "optional",
+      "StoryPoint": 5,
+      "Description": "The product specifies permissions for a security-critical resource in a way that allows that resource to be read or modified by unintended actors.",
+      "Files": ["src/main/resources/frauddetector.properties", "Dockerfile"],
+      "Explanation": "frauddetector.properties containing database credentials (db.user=sa, db.****** is bundled inside the WAR as WEB-INF/classes/frauddetector.properties with no file permission restrictions. The Dockerfile is based on tomcat:9.0-jdk11 and contains no USER directive, so the container runs as root and all files inherit world-readable permissions. Any process in the container can read the credentials file."
+    },
+    {
+      "Id": "CWE-778",
+      "Name": "Insufficient Logging",
+      "Category": "Credentials & Secrets",
+      "Severity": "potential",
+      "StoryPoint": 3,
+      "Description": "When a security-critical event occurs, the product either does not record the event or omits important details about the event when logging it.",
+      "Files": ["src/main/java/com/zavabank/frauddetector/SsoSessionService.java", "src/main/java/com/zavabank/frauddetector/AuthTokenInterceptor.java", "src/main/java/com/zavabank/frauddetector/FraudConfig.java"],
+      "Explanation": "The application contains no logging framework (no SLF4J, Log4j, java.util.logging, or System.out calls). Security-critical events are silently swallowed: (1) SsoSessionService.resolveSessionUser() catches SQLException with 'catch (SQLException ignored)' — authentication failures are never recorded; (2) SsoSessionService.resolveTokenFromAuthGateway() uses 'catch (Exception ignored)' — auth gateway errors are not logged; (3) FraudConfig static initializer uses 'catch (IOException ignored)' — configuration load failures are not logged; (4) all Action classes catch SQL exceptions without logging. An attacker probing for vulnerabilities or a misconfiguration causing auth bypass would leave no trace."
+    },
+    {
+      "Id": "CWE-798",
+      "Name": "Use of Hard-coded Credentials",
+      "Category": "Credentials & Secrets",
+      "Severity": "optional",
+      "StoryPoint": 5,
+      "Description": "The product contains hard-coded credentials, such as a password or cryptographic key.",
+      "Files": ["src/main/resources/frauddetector.properties"],
+      "Explanation": "frauddetector.properties committed to source control contains hard-coded database credentials: db.user=sa (the SQL Server system administrator account) and db.****** These credentials are bundled into the WAR artifact at build time and are always available at runtime as fallback values in FraudConfig.getDbUser() and FraudConfig.getDbPassword(), regardless of whether environment variables are set."
+    },
+    {
+      "Id": "CWE-567",
+      "Name": "Unsynchronized Access to Shared Data in a Multithreaded Context",
+      "Category": "Concurrency & Synchronization",
+      "Severity": "potential",
+      "StoryPoint": 5,
+      "Description": "The product does not properly synchronize shared data, such as static variables across threads, which can lead to undefined behavior and unpredictable data changes.",
+      "Files": ["src/main/java/com/zavabank/frauddetector/FlaggedQueueAction.java", "src/main/java/com/zavabank/frauddetector/TransactionDetailAction.java"],
+      "Explanation": "FlaggedQueueAction declares two static final fields: DecimalFormat MONEY_FORMAT and SimpleDateFormat DATE_FORMAT (lines 13-14). TransactionDetailAction declares a static final SimpleDateFormat DATE_FORMAT (line 9). Both SimpleDateFormat and DecimalFormat are not thread-safe — they hold internal mutable calendar/number-parsing state. These static instances are shared across all concurrent Tomcat request-handling threads without synchronization. Each request thread calls DATE_FORMAT.format() and MONEY_FORMAT.format() on the same instances concurrently, which can corrupt formatting results or throw unexpected exceptions under load."
+    },
+    {
+      "Id": "CWE-820",
+      "Name": "Missing Synchronization",
+      "Category": "Concurrency & Synchronization",
+      "Severity": "potential",
+      "StoryPoint": 8,
+      "Description": "The product utilizes a shared resource in a concurrent manner but does not attempt to synchronize access to the resource.",
+      "Files": ["src/main/java/com/zavabank/frauddetector/FlaggedQueueAction.java", "src/main/java/com/zavabank/frauddetector/TransactionDetailAction.java"],
+      "Explanation": "FlaggedQueueAction.MONEY_FORMAT (DecimalFormat) and FlaggedQueueAction.DATE_FORMAT / TransactionDetailAction.DATE_FORMAT (SimpleDateFormat) are static fields shared across all concurrent request threads. No synchronization, lock, or ThreadLocal is used when calling format() on these instances. Tomcat processes multiple concurrent HTTP requests, each invoking the execute() method in a separate thread, all accessing the same mutable formatter instances without any attempt to synchronize access."
+    }
+  ]
+}
